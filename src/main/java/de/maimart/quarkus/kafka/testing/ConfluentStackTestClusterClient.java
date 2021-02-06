@@ -10,16 +10,20 @@ import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.KafkaAdminClient;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
-import java.util.UUID;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ConfluentStackTestClusterClient {
@@ -91,7 +95,32 @@ public class ConfluentStackTestClusterClient {
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, keyDeserializer);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, SpecificAvroDeserializer.class);
 
-        return new KafkaConsumer<K, V>(props);
+        return new KafkaConsumer<>(props);
+    }
+
+    public <K, V> void produce(String topic, List<V> values, Class<? extends Serializer<K>> keySerializerClass, BiFunction<Integer, V, K> keyCreationFunction) {
+        KafkaProducer<K, V> producer = createProducerWithAvroValue(keySerializerClass);
+
+        for (int i = 0, valuesSize = values.size(); i < valuesSize; i++) {
+            V object = values.get(i);
+            ProducerRecord<K, V> record = new ProducerRecord<>(topic, keyCreationFunction.apply(i, object), object);
+            producer.send(record);
+        }
+        producer.flush();
+    }
+
+    public <K, V> List<V> consume(String topicName, String groupIdPrefix, int maxWaitTimeInMs, int expectedItems, Class<? extends Deserializer<K>> keyDeserializer) {
+        Instant startTime = Instant.now();
+
+        KafkaConsumer<K, V> recoConsumer = createConsumerWithAvroValue(keyDeserializer, groupIdPrefix);
+        recoConsumer.subscribe(Collections.singletonList(topicName));
+
+        List<V> receivedStoryRecommendations = new ArrayList<>();
+        do {
+            ConsumerRecords<K, V> consumedRecords = recoConsumer.poll(Duration.ofMillis(1000));
+            consumedRecords.records(topicName).forEach(record -> receivedStoryRecommendations.add(record.value()));
+        } while (Instant.now().toEpochMilli() - startTime.toEpochMilli() < maxWaitTimeInMs && receivedStoryRecommendations.size() < expectedItems);
+        return receivedStoryRecommendations;
     }
 
     public String getKafkaBootstrapServers() {
