@@ -53,5 +53,12 @@ public ConfluentStackTestClusterClient testClusterClient;
 ```
 
 ## How to use the client?
-###TBD
+### TBD
 see JavaDoc of the ConfluentStackTestClusterClient
+
+## TODOs
+* write JavaDoc
+* add examples in form of test implicitly testing the library
+* automate deployment to maven repository with GitHub actions
+* build stable version
+* test and improve dependencies (to be excluded from package), more information to maven dependency above
