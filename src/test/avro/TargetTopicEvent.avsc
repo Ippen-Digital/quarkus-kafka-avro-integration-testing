@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "TargetTopicEvent",
+  "namespace": "de.maimart.avro",
+  "fields": [
+    {
+      "name": "name",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null
+    }
+  ]
+}

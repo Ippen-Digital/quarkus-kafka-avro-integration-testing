@@ -1,0 +1,23 @@
+{
+  "type": "record",
+  "name": "SourceTopicEvent",
+  "namespace": "de.maimart.avro",
+  "fields": [
+    {
+      "name": "prename",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null
+    },
+    {
+      "name": "surname",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null
+    }
+  ]
+}
