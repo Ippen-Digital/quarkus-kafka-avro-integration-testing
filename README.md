@@ -4,9 +4,9 @@
 
 ## What does this testing library provide?
 
-### A Quarkus TestResource bootstrapping a complete Confluent Kafka stack
+### A Quarkus TestResource bootstrapping a complete [Confluent Kafka](https://www.confluent.io/) stack
 * including the zookeeper, kafka and a schema registry 
-* started as docker containers using testingcontainers
+* started as docker containers using [testcontainers](https://www.testcontainers.org/)
 * automatically overrides config properties
   * kafka.bootstrap.servers
   * mp.messaging.connector.smallrye-kafka.schema.registry.url
