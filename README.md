@@ -49,7 +49,7 @@ Version of the Confluent stack can be customized
 
 Just define the field in the test suite, no annotation needed
 ```java
-ConfluentStackTestClusterClient testClusterClient;
+public ConfluentStackTestClusterClient testClusterClient;
 ```
 
 ## How to use the client?
