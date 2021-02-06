@@ -58,6 +58,6 @@ class KafkaStreamExampleTest {
 
         TargetTopicEvent receivedEvent = receivedEvents.get(0);
 
-        assertThat(receivedEvent.getName()).asString().isEqualTo(String.format("%s %s", sourceTopicEvent.getPrename(), sourceTopicEvent.getSurname()));
+        assertThat(receivedEvent.getName()).asString().isEqualTo("Max Mustermann");
     }
 }

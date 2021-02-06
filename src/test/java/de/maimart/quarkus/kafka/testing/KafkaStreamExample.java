@@ -17,7 +17,8 @@ public class KafkaStreamExample {
     @Incoming("source-topic")
     @Outgoing("target-topic")
     public Multi<Record<String, TargetTopicEvent>> transformNames(SourceTopicEvent sourceEvent) {
-        return Multi.createFrom().item(sourceEvent).map(sourceTopicEvent -> Record.of(Instant.now().toString(), toTargetTopicEvent(sourceEvent)));
+        return Multi.createFrom().item(sourceEvent)
+                .map(sourceTopicEvent -> Record.of(Instant.now().toString(), toTargetTopicEvent(sourceEvent)));
     }
 
     private TargetTopicEvent toTargetTopicEvent(SourceTopicEvent sourceEvent) {
