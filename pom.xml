@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.maimart</groupId>
     <artifactId>quarkus-kafka-avro-integration-testing</artifactId>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.4-SNAPSHOT</version>
 
     <name>quarkus-kafka-avro-integration-testing</name>
     <description>A testing library for testing quarkus kafka applications using avro by providing testing support with the confluent stack</description>
@@ -229,8 +229,7 @@
                             <goal>schema</goal>
                         </goals>
                         <configuration>
-                            <sourceDirectory>src/test/avro</sourceDirectory>
-                            <outputDirectory>${project.build.directory}/generated-test-sources</outputDirectory>
+                            <testSourceDirectory>src/test/avro</testSourceDirectory>
                             <testOutputDirectory>${project.build.directory}/generated-test-sources</testOutputDirectory>
                             <stringType>String</stringType>
                         </configuration>
