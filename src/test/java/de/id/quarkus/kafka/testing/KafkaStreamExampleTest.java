@@ -17,18 +17,18 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
-@QuarkusTestResource(value = ConfluentStackTestCluster.class)
+@QuarkusTestResource(value = ConfluentStack.class)
 class KafkaStreamExampleTest {
 
     private static final String SOURCE_TOPIC = "de.id.source-topic";
     private static final String TARGET_TOPIC = "de.id.target-topic";
 
-    ConfluentStackTestClusterClient testClusterClient;
+    ConfluentStackClient testClusterClient;
 
     @BeforeEach
     void setUp() throws InterruptedException {
         testClusterClient.deleteAllTopics();
-        testClusterClient.createAdminClient().deleteConsumerGroups(Collections.singleton("TestGroup"));
+        testClusterClient.deleteAllConsumerGroups();
         // wait until deletion
         Thread.sleep(1000);
         testClusterClient.createTopics(SOURCE_TOPIC, TARGET_TOPIC);
@@ -41,9 +41,9 @@ class KafkaStreamExampleTest {
         SourceTopicEvent sourceTopicEvent = new SourceTopicEvent("Max", "Mustermann");
         List<SourceTopicEvent> eventsToSend = IntStream.range(0, 10).mapToObj(i -> sourceTopicEvent).collect(Collectors.toList());
 
-        testClusterClient.produce(SOURCE_TOPIC, eventsToSend, StringSerializer.class, (index, event) -> String.valueOf(index) );
+        testClusterClient.sendRecords(SOURCE_TOPIC, eventsToSend, StringSerializer.class, (index, event) -> String.valueOf(index));
 
-        List<TargetTopicEvent> receivedEvents = testClusterClient.consume(TARGET_TOPIC, "testConsumerGroup", 10000, eventsToSend.size(), StringDeserializer.class);
+        List<TargetTopicEvent> receivedEvents = testClusterClient.waitForRecords(TARGET_TOPIC, "testConsumerGroup", 10000, eventsToSend.size(), StringDeserializer.class);
 
         assertThat(receivedEvents).hasSameSizeAs(eventsToSend);
     }
@@ -52,9 +52,9 @@ class KafkaStreamExampleTest {
     void shouldEmmitCorrectlyTransformedEvents() {
         SourceTopicEvent sourceTopicEvent = new SourceTopicEvent("Max", "Mustermann");
 
-        testClusterClient.produce(SOURCE_TOPIC, Collections.singletonList(sourceTopicEvent), StringSerializer.class, (index, event) -> String.valueOf(index) );
+        testClusterClient.sendRecords(SOURCE_TOPIC, Collections.singletonList(sourceTopicEvent), StringSerializer.class, (index, event) -> String.valueOf(index));
 
-        List<TargetTopicEvent> receivedEvents = testClusterClient.consume(TARGET_TOPIC, "testConsumerGroup", 10000, 1, StringDeserializer.class);
+        List<TargetTopicEvent> receivedEvents = testClusterClient.waitForRecords(TARGET_TOPIC, "testConsumerGroup", 10000, 1, StringDeserializer.class);
 
         TargetTopicEvent receivedEvent = receivedEvents.get(0);
 

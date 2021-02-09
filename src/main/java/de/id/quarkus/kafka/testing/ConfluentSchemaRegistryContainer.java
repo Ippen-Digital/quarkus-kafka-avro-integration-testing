@@ -6,12 +6,15 @@ import org.testcontainers.utility.DockerImageName;
 
 import static java.lang.String.format;
 
-public class ConfluentSchemaRegistryContainer extends GenericContainer<ConfluentSchemaRegistryContainer> {
+/**
+ * Confluent schema registry container
+ */
+class ConfluentSchemaRegistryContainer extends GenericContainer<ConfluentSchemaRegistryContainer> {
     private static final int SCHEMA_REGISTRY_INTERNAL_PORT = 8081;
 
     private static final String NETWORK_ALIAS = "schema-registry";
 
-    public ConfluentSchemaRegistryContainer(DockerImageName dockerImageName, String internalKafkaConnectString) {
+    ConfluentSchemaRegistryContainer(DockerImageName dockerImageName, String internalKafkaConnectString) {
         super(dockerImageName);
 
         addEnv("SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS", internalKafkaConnectString);
@@ -23,7 +26,7 @@ public class ConfluentSchemaRegistryContainer extends GenericContainer<Confluent
         waitingFor(Wait.forHttp("/subjects"));
     }
 
-    public String getUrl() {
+    String getUrl() {
         return format("http://%s:%d", this.getContainerIpAddress(), this.getMappedPort(SCHEMA_REGISTRY_INTERNAL_PORT));
     }
 }

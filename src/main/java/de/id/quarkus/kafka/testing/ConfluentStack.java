@@ -12,11 +12,20 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
- * Automatically injects ConfluentStackTestClusterClient on fields of the test suite (no annotations needed)
+ * A Quarkus test resource bootstrapping a Confluent Kafka stack incl. Kafka, schema registry and zookeeper by testcontainers.<br>
+ * Integrated as @{@link io.quarkus.test.common.QuarkusTestResource}<br>
+ * <p>
+ * Version of used Confluent can be customized as initArg: <br>
+ * <b>@QuarkusTestResource(value = ConfluentStack.class, initArgs = { @ResourceArg(name = ConfluentStack.CONFLUENT_VERSION_ARG, value = "5.3.1")})</b><br>
+ * If not set CONFLUENT_VERSION_DEFAULT will be used. <br>
+ * <p>
+ * Automatically injects {@link ConfluentStackClient} on fields of the test suite (no annotation needed) <br>
+ * Deletes all topics and consumer groups when injected to a new test instance.
  */
-public class ConfluentStackTestCluster implements QuarkusTestResourceLifecycleManager {
+public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
 
     public static final String CONFLUENT_VERSION_ARG = "confluentVersion";
+    public static final String CONFLUENT_VERSION_DEFAULT = "5.4.3";
     private DockerImageName kafkaImage;
     private DockerImageName registryImage;
     String kafkaNetworkAlias = "kafka";
@@ -24,11 +33,11 @@ public class ConfluentStackTestCluster implements QuarkusTestResourceLifecycleMa
     Network network;
     KafkaContainer kafka;
     ConfluentSchemaRegistryContainer schemaRegistry;
-    ConfluentStackTestClusterClient testClusterClient;
+    ConfluentStackClient testClusterClient;
 
     @Override
     public void init(Map<String, String> initArgs) {
-        String confluentVersion = initArgs.getOrDefault(CONFLUENT_VERSION_ARG, "5.4.3");
+        String confluentVersion = initArgs.getOrDefault(CONFLUENT_VERSION_ARG, CONFLUENT_VERSION_DEFAULT);
         kafkaImage = DockerImageName.parse(String.format("confluentinc/cp-kafka:%s", confluentVersion));
         registryImage = DockerImageName.parse(String.format("confluentinc/cp-schema-registry:%s", confluentVersion));
     }
@@ -47,7 +56,7 @@ public class ConfluentStackTestCluster implements QuarkusTestResourceLifecycleMa
                 .withNetwork(network);
         schemaRegistry.start();
 
-        testClusterClient = new ConfluentStackTestClusterClient(kafka.getBootstrapServers(), schemaRegistry.getUrl());
+        testClusterClient = new ConfluentStackClient(kafka.getBootstrapServers(), schemaRegistry.getUrl());
 
         Map<String, String> properties = new HashMap<>();
         properties.put("kafka.bootstrap.servers", kafka.getBootstrapServers());
@@ -57,6 +66,7 @@ public class ConfluentStackTestCluster implements QuarkusTestResourceLifecycleMa
 
     @Override
     public void inject(Object testInstance) {
+        testClusterClient.deleteAllConsumerGroups();
         testClusterClient.deleteAllTopics();
         injectClientInTestInstance(testInstance);
     }
@@ -65,13 +75,13 @@ public class ConfluentStackTestCluster implements QuarkusTestResourceLifecycleMa
         Stream.of(testInstance.getClass(), testInstance.getClass().getSuperclass())
                 .filter(Objects::nonNull)
                 .flatMap(clazz -> Arrays.stream(clazz.getDeclaredFields()))
-                .filter(field -> field.getType().equals(ConfluentStackTestClusterClient.class))
+                .filter(field -> field.getType().equals(ConfluentStackClient.class))
                 .forEach(field -> {
                     field.setAccessible(true);
                     try {
                         field.set(testInstance, testClusterClient);
                     } catch (IllegalAccessException e) {
-                        throw new RuntimeException(String.format("Error while injecting %s to instance %s", ConfluentStackTestClusterClient.class.getName(), testInstance), e);
+                        throw new RuntimeException(String.format("Error while injecting %s to instance %s", ConfluentStackClient.class.getName(), testInstance), e);
                     }
                 });
     }
