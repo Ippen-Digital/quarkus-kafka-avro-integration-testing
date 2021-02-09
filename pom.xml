@@ -31,8 +31,8 @@
 
     <scm>
         <url>https://github.com/Ippen-Digital/quarkus-kafka-avro-integration-testing</url>
-        <connection>scm:git:${project.scm.url}</connection>
-        <developerConnection>scm:git:${project.scm.url}</developerConnection>
+        <connection>scm:git:git://github.com/Ippen-Digital/quarkus-kafka-avro-integration-testing.git</connection>
+        <developerConnection>scm:git:git://github.com/Ippen-Digital/quarkus-kafka-avro-integration-testing.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
