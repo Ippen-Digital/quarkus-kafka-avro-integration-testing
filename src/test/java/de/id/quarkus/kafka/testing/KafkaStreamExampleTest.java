@@ -1,7 +1,7 @@
-package de.maimart.quarkus.kafka.testing;
+package de.id.quarkus.kafka.testing;
 
-import de.maimart.avro.SourceTopicEvent;
-import de.maimart.avro.TargetTopicEvent;
+import de.id.avro.SourceTopicEvent;
+import de.id.avro.TargetTopicEvent;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -20,8 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @QuarkusTestResource(value = ConfluentStackTestCluster.class)
 class KafkaStreamExampleTest {
 
-    private static final String SOURCE_TOPIC = "de.maimart.source-topic";
-    private static final String TARGET_TOPIC = "de.maimart.target-topic";
+    private static final String SOURCE_TOPIC = "de.id.source-topic";
+    private static final String TARGET_TOPIC = "de.id.target-topic";
 
     ConfluentStackTestClusterClient testClusterClient;
 

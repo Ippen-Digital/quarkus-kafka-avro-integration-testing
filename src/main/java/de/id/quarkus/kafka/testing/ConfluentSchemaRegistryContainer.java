@@ -1,4 +1,4 @@
-package de.maimart.quarkus.kafka.testing;
+package de.id.quarkus.kafka.testing;
 
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;

@@ -1,4 +1,4 @@
-package de.maimart.quarkus.kafka.testing;
+package de.id.quarkus.kafka.testing;
 
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;

@@ -1,13 +1,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>de.maimart</groupId>
+    <groupId>de.ippen-digital</groupId>
     <artifactId>quarkus-kafka-avro-integration-testing</artifactId>
-    <version>0.0.4-SNAPSHOT</version>
+    <version>0.0.5-SNAPSHOT</version>
 
     <name>quarkus-kafka-avro-integration-testing</name>
     <description>A testing library for testing quarkus kafka applications using avro by providing testing support with the confluent stack</description>
-    <url>https://github.com/maimArt/quarkus-kafka-avro-integration-testing</url>
+    <url>https://github.com/Ippen-Digital/quarkus-kafka-avro-integration-testing</url>
     <developers>
         <developer>
             <email>martin.maier@maimart.de</email>
@@ -25,14 +25,14 @@
         </license>
     </licenses>
     <issueManagement>
-        <url>https://github.com/maimArt/quarkus-kafka-avro-integration-testing/issues</url>
+        <url>https://github.com/Ippen-Digital/quarkus-kafka-avro-integration-testing/issues</url>
         <system>GitHub Issues</system>
     </issueManagement>
 
     <scm>
-        <url>https://github.com/maimArt/quarkus-kafka-avro-integration-testing</url>
-        <connection>scm:git:git://github.com/maimArt/quarkus-kafka-avro-integration-testing.git</connection>
-        <developerConnection>scm:git:git@github.com:maimArt/quarkus-kafka-avro-integration-testing.git</developerConnection>
+        <url>https://github.com/Ippen-Digital/quarkus-kafka-avro-integration-testing</url>
+        <connection>scm:git:git://github.com/Ippen-Digital/quarkus-kafka-avro-integration-testing.git</connection>
+        <developerConnection>scm:git:git@github.com:Ippen-Digital/quarkus-kafka-avro-integration-testing.git</developerConnection>
     </scm>
 
     <properties>

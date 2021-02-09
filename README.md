@@ -24,7 +24,7 @@
 ### add dependency
 ```xml
 <dependency>
-    <groupId>de.maimart</groupId>
+    <groupId>de.ippen-digital</groupId>
     <artifactId>quarkus-kafka-avro-integration-testing</artifactId>
     <version></version>
     <scope>test</scope>
@@ -55,7 +55,8 @@ public ConfluentStackTestClusterClient testClusterClient;
 ## How to use the client?
 
 ### Example
-See [KafkaStreamExampleTest.java](src/test/java/de/maimart/quarkus/kafka/testing/KafkaStreamExampleTest.java) as a real example
+
+See [KafkaStreamExampleTest.java](src/test/java/de/id/quarkus/kafka/testing/KafkaStreamExampleTest.java) as a real example
 ### TBD
 see JavaDoc of the ConfluentStackTestClusterClient
 

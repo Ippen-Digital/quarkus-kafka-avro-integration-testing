@@ -1,4 +1,4 @@
-package de.maimart.quarkus.kafka.testing;
+package de.id.quarkus.kafka.testing;
 
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 import org.testcontainers.containers.KafkaContainer;

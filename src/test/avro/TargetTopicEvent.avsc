@@ -1,7 +1,7 @@
 {
   "type": "record",
   "name": "TargetTopicEvent",
-  "namespace": "de.maimart.avro",
+  "namespace": "de.id.avro",
   "fields": [
     {
       "name": "name",

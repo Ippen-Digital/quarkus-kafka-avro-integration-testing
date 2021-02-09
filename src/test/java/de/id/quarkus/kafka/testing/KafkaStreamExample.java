@@ -1,7 +1,7 @@
-package de.maimart.quarkus.kafka.testing;
+package de.id.quarkus.kafka.testing;
 
-import de.maimart.avro.SourceTopicEvent;
-import de.maimart.avro.TargetTopicEvent;
+import de.id.avro.SourceTopicEvent;
+import de.id.avro.TargetTopicEvent;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.reactive.messaging.kafka.Record;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
