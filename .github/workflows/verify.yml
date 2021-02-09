@@ -1,0 +1,17 @@
+name: Maven Verify
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK
+      uses: actions/setup-java@v1.4.3
+      with:
+        java-version: 11
+    - name: Build with Maven
+      run: mvn -B verify --file pom.xml
