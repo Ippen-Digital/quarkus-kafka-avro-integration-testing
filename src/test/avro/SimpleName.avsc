@@ -1,6 +1,6 @@
 {
   "type": "record",
-  "name": "TargetTopicEvent",
+  "name": "SimpleName",
   "namespace": "de.id.avro",
   "fields": [
     {

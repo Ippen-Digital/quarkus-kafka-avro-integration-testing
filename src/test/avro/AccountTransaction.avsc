@@ -1,6 +1,6 @@
 {
   "type": "record",
-  "name": "SourceTopicEvent",
+  "name": "AccountTransaction",
   "namespace": "de.id.avro",
   "fields": [
     {
@@ -18,6 +18,16 @@
         "string"
       ],
       "default": null
+    },
+    {
+      "name": "amountOfMoney",
+      "type": "double",
+      "default": 0
+    },
+    {
+      "name": "incoming",
+      "type": "boolean",
+      "default": true
     }
   ]
 }
