@@ -1,6 +1,6 @@
 {
   "type": "record",
-  "name": "SimpleName",
+  "name": "Donator",
   "namespace": "de.id.avro",
   "fields": [
     {

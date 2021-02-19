@@ -1,7 +1,7 @@
 package de.id.quarkus.kafka.testing.reactivemessaging;
 
-import de.id.avro.AccountTransaction;
-import de.id.avro.SimpleName;
+import de.id.avro.Donation;
+import de.id.avro.Donator;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.reactive.messaging.kafka.Record;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
@@ -11,16 +11,16 @@ import javax.enterprise.context.ApplicationScoped;
 import java.time.Instant;
 
 @ApplicationScoped
-public class ReactiveNameMerger {
+public class ReactiveDonatorExtractor {
 
     @Incoming("source-topic")
     @Outgoing("target-topic")
-    public Multi<Record<String, SimpleName>> transformNames(AccountTransaction sourceEvent) {
+    public Multi<Record<String, Donator>> transformNames(Donation sourceEvent) {
         return Multi.createFrom().item(sourceEvent)
                 .map(sourceTopicEvent -> Record.of(Instant.now().toString(), toSimpleName(sourceEvent)));
     }
 
-    private SimpleName toSimpleName(AccountTransaction sourceEvent) {
-        return new SimpleName(String.format("%s %s", sourceEvent.getPrename(), sourceEvent.getSurname()));
+    private Donator toSimpleName(Donation sourceEvent) {
+        return new Donator(String.format("%s %s", sourceEvent.getPrename(), sourceEvent.getSurname()));
     }
 }

@@ -1,7 +1,7 @@
 package de.id.quarkus.kafka.testing.kafkastreams;
 
-import de.id.avro.AccountTransaction;
-import de.id.avro.SimpleName;
+import de.id.avro.Donation;
+import de.id.avro.Donator;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.KStream;
@@ -10,7 +10,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 
 @ApplicationScoped
-public class KStreamsNameMerger {
+public class KStreamsDonatorExtractor {
 
     private static final String SOURCE_TOPIC = "kafkastreams.source-topic";
     private static final String TARGET_TOPIC = "kafkastreams.target-topic";
@@ -18,13 +18,13 @@ public class KStreamsNameMerger {
     @Produces
     public Topology buildTopology() {
         StreamsBuilder streamsBuilder = new StreamsBuilder();
-        KStream<String, AccountTransaction> stream = streamsBuilder.stream(SOURCE_TOPIC);
+        KStream<String, Donation> stream = streamsBuilder.stream(SOURCE_TOPIC);
         stream.mapValues(this::toSimpleName)
                 .to(TARGET_TOPIC);
         return streamsBuilder.build();
     }
 
-    private SimpleName toSimpleName(AccountTransaction sourceEvent) {
-        return new SimpleName(String.format("%s %s", sourceEvent.getPrename(), sourceEvent.getSurname()));
+    private Donator toSimpleName(Donation sourceEvent) {
+        return new Donator(String.format("%s %s", sourceEvent.getPrename(), sourceEvent.getSurname()));
     }
 }

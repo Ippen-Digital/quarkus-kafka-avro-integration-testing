@@ -7,23 +7,27 @@ Example integration-test code:
 ```java
 @QuarkusTest
 @QuarkusTestResource(value = ConfluentStack.class)
-class ReactiveNameMergerTest {
+class ReactiveDonatorExtractorTest {
+
+  ConfluentStackClient testClusterClient;
 
   @BeforeEach
   void setUp() {
-      testClusterClient.createTopics(SOURCE_TOPIC, TARGET_TOPIC);
+    testClusterClient.createTopics(SOURCE_TOPIC, TARGET_TOPIC);
   }
 
   @Test
-  void shouldTransformNames() {   
-      Future<List<SimpleName>> receiveFuture = testClusterClient.waitForRecords(TARGET_TOPIC, "testConsumerGroup",  1, StringDeserializer.class);
-  
-      testClusterClient.sendRecords(SOURCE_TOPIC, Collections.singletonList(accountTransaction), StringSerializer.class, (index, event) -> String.valueOf(index));
-  
-      List<SimpleName> receivedNames = receiveFuture.get(MAX_CONSUMER_WAIT_TIME, TimeUnit.MILLISECONDS);
-  
-      assertThat(receivedNames).hasSize(1);
-      assertThat(receivedNames.get(0).getName()).asString().isEqualTo("Max Mustermann");
+  void shouldExtractADonatorOutOfEveryDonation() throws InterruptedException, ExecutionException, TimeoutException {
+    Donation donation = Donation.newBuilder().setPrename("Max").setSurname("Mustermann").build();
+    List<Donation> donationToSend = IntStream.range(0, 10).mapToObj(i -> donation).collect(Collectors.toList());
+
+    Future<List<Donator>> receiveFuture = testClusterClient.waitForRecords(TARGET_TOPIC, "testConsumerGroup", donationToSend.size(), StringDeserializer.class);
+
+    testClusterClient.sendRecords(SOURCE_TOPIC, donationToSend, StringSerializer.class, (index, event) -> String.valueOf(index));
+
+    List<Donator> receivedDonators = receiveFuture.get(MAX_CONSUMER_WAIT_TIME, TimeUnit.MILLISECONDS);
+
+    assertThat(receivedDonators).hasSameSizeAs(donationToSend);
   }
 }
 ```
@@ -101,8 +105,10 @@ The consumers created by this library are configured to consume latest emitted e
 
 The library itself is tested by different scenarios
 
-#### Sample scenario: merging a prename and a surname within a simple stream
+#### Sample scenario: extract the donators out of donations
 
-Implementation as reactive messaging: [ReactiveNameMergerTest.java](src/test/java/de/id/quarkus/kafka/testing/reactivemessaging/ReactiveNameMerger.java)
+Implementation as reactive
+messaging: [ReactiveDonatorExtractorTest.java](src/test/java/de/id/quarkus/kafka/testing/reactivemessaging/ReactiveDonatorExtractorTest.java)
 
-Implementation as Kafka streaming topology: [KStreamsNameMergerTest.java](src/test/java/de/id/quarkus/kafka/testing/kafkastreams/KStreamsNameMergerTest.java)
+Implementation as Kafka streaming
+topology: [KStreamsDonatorExtractorTest.java](src/test/java/de/id/quarkus/kafka/testing/kafkastreams/KStreamsDonatorExtractorTest.java)

@@ -1,6 +1,6 @@
 {
   "type": "record",
-  "name": "AccountTransaction",
+  "name": "Donation",
   "namespace": "de.id.avro",
   "fields": [
     {
