@@ -13,6 +13,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -20,46 +24,44 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
 @QuarkusTestResource(value = ConfluentStack.class)
-class NameMergerTest {
+class ReactiveNameMergerTest {
 
-    private static final String SOURCE_TOPIC = "de.id.source-topic";
-    private static final String TARGET_TOPIC = "de.id.target-topic";
+    public static final int MAX_CONSUMER_WAIT_TIME = 10000;
+    private static final String SOURCE_TOPIC = "reactivemessaging.source-topic";
+    private static final String TARGET_TOPIC = "reactivemessaging.target-topic";
 
     ConfluentStackClient testClusterClient;
 
     @BeforeEach
-    void setUp() throws InterruptedException {
-        testClusterClient.deleteAllTopics();
-        testClusterClient.deleteAllConsumerGroups();
-        // wait until deletion
-        Thread.sleep(1000);
+    void setUp() {
         testClusterClient.createTopics(SOURCE_TOPIC, TARGET_TOPIC);
-        testClusterClient.registerSchemaRegistryTypes(AccountTransaction.getClassSchema());
-        testClusterClient.registerSchemaRegistryTypes(SimpleName.getClassSchema());
     }
 
     @Test
-    void shouldEmmitAllEvents() {
+    void shouldEmmitAllEvents() throws InterruptedException, ExecutionException, TimeoutException {
         AccountTransaction accountTransaction = AccountTransaction.newBuilder().setPrename("Max").setSurname("Mustermann").build();
         List<AccountTransaction> eventsToSend = IntStream.range(0, 10).mapToObj(i -> accountTransaction).collect(Collectors.toList());
 
+        Future<List<SimpleName>> receiveFuture = testClusterClient.waitForRecords(TARGET_TOPIC, "testConsumerGroup", eventsToSend.size(), StringDeserializer.class);
+
         testClusterClient.sendRecords(SOURCE_TOPIC, eventsToSend, StringSerializer.class, (index, event) -> String.valueOf(index));
 
-        List<SimpleName> receivedNames = testClusterClient.waitForRecords(TARGET_TOPIC, "testConsumerGroup", 10000, eventsToSend.size(), StringDeserializer.class);
+        List<SimpleName> receivedNames = receiveFuture.get(MAX_CONSUMER_WAIT_TIME, TimeUnit.MILLISECONDS);
 
         assertThat(receivedNames).hasSameSizeAs(eventsToSend);
     }
 
     @Test
-    void shouldEmmitCorrectlyTransformedEvents() {
+    void shouldEmmitCorrectlyTransformedEvents() throws InterruptedException, ExecutionException, TimeoutException {
         AccountTransaction accountTransaction = AccountTransaction.newBuilder().setPrename("Max").setSurname("Mustermann").build();
+
+        Future<List<SimpleName>> receiveFuture = testClusterClient.waitForRecords(TARGET_TOPIC, "testConsumerGroup", 1, StringDeserializer.class);
 
         testClusterClient.sendRecords(SOURCE_TOPIC, Collections.singletonList(accountTransaction), StringSerializer.class, (index, event) -> String.valueOf(index));
 
-        List<SimpleName> receivedNames = testClusterClient.waitForRecords(TARGET_TOPIC, "testConsumerGroup", 10000, 1, StringDeserializer.class);
+        List<SimpleName> receivedNames = receiveFuture.get(MAX_CONSUMER_WAIT_TIME, TimeUnit.MILLISECONDS);
 
-        SimpleName receivedEvent = receivedNames.get(0);
-
-        assertThat(receivedEvent.getName()).asString().isEqualTo("Max Mustermann");
+        assertThat(receivedNames).hasSize(1);
+        assertThat(receivedNames.get(0).getName()).asString().isEqualTo("Max Mustermann");
     }
 }

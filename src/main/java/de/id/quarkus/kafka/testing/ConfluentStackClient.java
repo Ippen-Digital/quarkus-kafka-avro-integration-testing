@@ -6,10 +6,7 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroDeserializer;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
 import org.apache.avro.Schema;
 import org.apache.kafka.clients.CommonClientConfigs;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.ConsumerGroupListing;
-import org.apache.kafka.clients.admin.KafkaAdminClient;
-import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -20,8 +17,10 @@ import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serializer;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -32,10 +31,12 @@ public class ConfluentStackClient {
 
     private final String kafkaBootstrapServers;
     private final String schemaRegistryUrl;
+    private final ExecutorService executor;
 
     ConfluentStackClient(String kafkaBootstrapServers, String schemaRegistryUrl) {
         this.kafkaBootstrapServers = kafkaBootstrapServers;
         this.schemaRegistryUrl = schemaRegistryUrl;
+        this.executor = Executors.newCachedThreadPool();
     }
 
     public String getKafkaBootstrapServers() {
@@ -47,44 +48,33 @@ public class ConfluentStackClient {
     }
 
     /**
-     * synchronously deletes all existing topics
-     */
-    public void deleteAllTopics() {
-        AdminClient adminClient = createAdminClient();
-        try {
-            adminClient.listTopics().names().thenApply(adminClient::deleteTopics).get();
-        } catch (Exception e) {
-            throw new RuntimeException("Error while deleting topics", e);
-        }
-    }
-
-    /**
-     * create topic(s) with 1 partition and 1 replica
+     * create topic(s) with 1 partition and 1 replica, if they are not already existing
      *
      * @param topicNames name of topics
      */
     public void createTopics(String... topicNames) {
-        List<NewTopic> newTopics = Arrays.stream(topicNames).map(topicName -> new NewTopic(topicName, 1, (short) 1)).collect(Collectors.toList());
+
         try {
-            createAdminClient().createTopics(newTopics).all().get();
+            AdminClient adminClient = createAdminClient();
+            Set<String> alreadyExistingTopics = adminClient.listTopics(new ListTopicsOptions().timeoutMs(5000)).names().get();
+            List<NewTopic> topicsToCreate = Arrays.stream(topicNames)
+                    .filter(topicName -> !alreadyExistingTopics.contains(topicName))
+                    .map(topicName -> new NewTopic(topicName, 1, (short) 1))
+                    .collect(Collectors.toList());
+            adminClient.createTopics(topicsToCreate).all().get();
         } catch (Exception e) {
             throw new RuntimeException("Error while creating topics", e);
         }
     }
 
     /**
-     * synchronously deletes all consumer groups
+     * @return preconfigured client for the Kafka
      */
-    public void deleteAllConsumerGroups() {
-        AdminClient adminClient = createAdminClient();
-        try {
-            adminClient.listConsumerGroups().all().thenApply(consumerGroupListings -> {
-                List<String> groupIds = consumerGroupListings.stream().map(ConsumerGroupListing::groupId).collect(Collectors.toList());
-                return adminClient.deleteConsumerGroups(groupIds);
-            }).get();
-        } catch (Exception e) {
-            throw new RuntimeException("Error while deleting consumer groups", e);
-        }
+    public AdminClient createAdminClient() {
+        var properties = new Properties();
+        properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBootstrapServers);
+        properties.put(AdminClientConfig.CLIENT_ID_CONFIG, "TestAdminClient-" + UUID.randomUUID());
+        return KafkaAdminClient.create(properties);
     }
 
     /**
@@ -98,15 +88,6 @@ public class ConfluentStackClient {
         } catch (Exception e) {
             throw new RuntimeException("Error while registering schemas", e);
         }
-    }
-
-    /**
-     * @return preconfigured client for the Kafka
-     */
-    public AdminClient createAdminClient() {
-        var properties = new Properties();
-        properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBootstrapServers);
-        return KafkaAdminClient.create(properties);
     }
 
     /**
@@ -128,6 +109,7 @@ public class ConfluentStackClient {
     public <K, V> KafkaProducer<K, V> createProducerWithAvroValue(Class<? extends Serializer<K>> keySerializerClass) {
         final Properties props = new Properties();
         props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, kafkaBootstrapServers);
+        props.put(ProducerConfig.CLIENT_ID_CONFIG, "TestProducer-" + UUID.randomUUID());
         props.put(ProducerConfig.ACKS_CONFIG, "all");
         props.put(ProducerConfig.RETRIES_CONFIG, 0);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, keySerializerClass.getName());
@@ -151,7 +133,7 @@ public class ConfluentStackClient {
         props.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroupIdPrefix + UUID.randomUUID());
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
         props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "1000");
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         props.put(ConsumerConfig.ALLOW_AUTO_CREATE_TOPICS_CONFIG, "false");
         props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
                 schemaRegistryUrl);
@@ -186,25 +168,24 @@ public class ConfluentStackClient {
      * waiting to receive records from the kafka topic using a consumber build by {@link #createConsumerWithAvroValue(Class, String)}
      *
      * @param topicName       consuming topic
-     * @param groupIdPrefix   prefix used for the groupId (a unifier will be added)
-     * @param maxWaitTimeInMs maximum time the function will wait until expectedItems are received
+     * @param groupIdPrefix   prefix used for the groupId (a unifier will be added)received
      * @param expectedItems   minimum amount of items waiting to be received
      * @param keyDeserializer key used for the key record
      * @param <K>             type of key
      * @param <V>             type of value
      * @return received records, not null
      */
-    public <K, V> List<V> waitForRecords(String topicName, String groupIdPrefix, int maxWaitTimeInMs, int expectedItems, Class<? extends Deserializer<K>> keyDeserializer) {
-        Instant startTime = Instant.now();
-
-        KafkaConsumer<K, V> recoConsumer = createConsumerWithAvroValue(keyDeserializer, groupIdPrefix);
+    public <K, V> Future<List<V>> waitForRecords(String topicName, String groupIdPrefix, int expectedItems, Class<? extends Deserializer<K>> keyDeserializer) {
+        // it´s important to subscribe synchronous to avoid race conditions when afterwards a producer writes to this topic
+        KafkaConsumer<K, V> recoConsumer = this.createConsumerWithAvroValue(keyDeserializer, groupIdPrefix);
         recoConsumer.subscribe(Collections.singletonList(topicName));
-
-        List<V> receivedStoryRecommendations = new ArrayList<>();
-        do {
-            ConsumerRecords<K, V> consumedRecords = recoConsumer.poll(Duration.ofMillis(1000));
-            consumedRecords.records(topicName).forEach(record -> receivedStoryRecommendations.add(record.value()));
-        } while (Instant.now().toEpochMilli() - startTime.toEpochMilli() < maxWaitTimeInMs && receivedStoryRecommendations.size() < expectedItems);
-        return receivedStoryRecommendations;
+        return executor.submit(() -> {
+            List<V> receivedStoryRecommendations = new ArrayList<>();
+            do {
+                ConsumerRecords<K, V> consumedRecords = recoConsumer.poll(Duration.ofMillis(1000));
+                consumedRecords.records(topicName).forEach(record -> receivedStoryRecommendations.add(record.value()));
+            } while (receivedStoryRecommendations.size() < expectedItems);
+            return receivedStoryRecommendations;
+        });
     }
 }

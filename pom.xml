@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.ippen-digital</groupId>
     <artifactId>quarkus-kafka-avro-integration-testing</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.1.0-SNAPSHOT</version>
 
     <name>quarkus-kafka-avro-integration-testing</name>
     <description>A testing library for testing quarkus kafka applications using avro by providing testing support with the confluent stack</description>
@@ -90,10 +90,15 @@
             <artifactId>kafka</artifactId>
             <version>${testcontainers.version}</version>
         </dependency>
-<!--  TEST DEPENDENCIES  -->
+        <!--  TEST DEPENDENCIES  -->
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-smallrye-reactive-messaging-kafka</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-kafka-streams</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

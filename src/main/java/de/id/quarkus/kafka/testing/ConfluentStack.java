@@ -47,6 +47,7 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
         network = Network.newNetwork();
 
         this.kafka = new KafkaContainer(kafkaImage)
+                .withEnv("KAFKA_DELETE_TOPIC_ENABLE", "true")
                 .withNetwork(network)
                 .withNetworkAliases(kafkaNetworkAlias);
         this.kafka.start();
@@ -60,14 +61,14 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
 
         Map<String, String> properties = new HashMap<>();
         properties.put("kafka.bootstrap.servers", kafka.getBootstrapServers());
+        properties.put("quarkus.kafka-streams.bootstrap-servers", kafka.getBootstrapServers());
         properties.put("mp.messaging.connector.smallrye-kafka.schema.registry.url", schemaRegistry.getUrl());
+        properties.put("quarkus.kafka-streams.schema-registry-url", schemaRegistry.getUrl());
         return properties;
     }
 
     @Override
     public void inject(Object testInstance) {
-        testClusterClient.deleteAllConsumerGroups();
-        testClusterClient.deleteAllTopics();
         injectClientInTestInstance(testInstance);
     }
 

@@ -11,7 +11,7 @@ import javax.enterprise.context.ApplicationScoped;
 import java.time.Instant;
 
 @ApplicationScoped
-public class NameMerger {
+public class ReactiveNameMerger {
 
     @Incoming("source-topic")
     @Outgoing("target-topic")
