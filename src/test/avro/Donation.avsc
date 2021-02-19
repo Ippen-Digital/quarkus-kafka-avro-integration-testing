@@ -20,14 +20,13 @@
       "default": null
     },
     {
-      "name": "amountOfMoney",
+      "name": "amount",
       "type": "double",
       "default": 0
     },
     {
-      "name": "incoming",
-      "type": "boolean",
-      "default": true
+      "name": "donationCollectorId",
+      "type": "int"
     }
   ]
 }

@@ -4,8 +4,10 @@ import de.id.avro.Donation;
 import de.id.avro.Donator;
 import de.id.quarkus.kafka.testing.ConfluentStack;
 import de.id.quarkus.kafka.testing.ConfluentStackClient;
+import de.id.quarkus.kafka.testing.scenarios.DonatorExtractorProfile;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,9 +26,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
 @QuarkusTestResource(value = ConfluentStack.class)
+@TestProfile(DonatorExtractorProfile.class)
 class KStreamsDonatorExtractorTest {
 
-    public static final int MAX_CONSUMER_WAIT_TIME = 10000;
+    public static final int MAX_CONSUMER_WAIT_TIME = 5000;
     private static final String SOURCE_TOPIC = "kafkastreams.source-topic";
     private static final String TARGET_TOPIC = "kafkastreams.target-topic";
 
@@ -39,7 +42,7 @@ class KStreamsDonatorExtractorTest {
 
     @Test
     void shouldExtractADonatorOutOfEveryDonation() throws InterruptedException, ExecutionException, TimeoutException {
-        Donation donation = Donation.newBuilder().setPrename("Max").setSurname("Mustermann").build();
+        Donation donation = new Donation("Max", "Mustermann", 10.0, 111);
         List<Donation> donationsToSend = IntStream.range(0, 10).mapToObj(i -> donation).collect(Collectors.toList());
 
         Future<List<Donator>> receiveFuture = testClusterClient.waitForRecords(TARGET_TOPIC, "testConsumerGroup", donationsToSend.size(), StringDeserializer.class);
@@ -53,7 +56,7 @@ class KStreamsDonatorExtractorTest {
 
     @Test
     void shouldExtractDonatorsName() throws InterruptedException, ExecutionException, TimeoutException {
-        Donation donation = Donation.newBuilder().setPrename("Max").setSurname("Mustermann").build();
+        Donation donation = new Donation("Max", "Mustermann", 10.0, 111);
 
         Future<List<Donator>> receiveFuture = testClusterClient.waitForRecords(TARGET_TOPIC, "testConsumerGroup", 1, StringDeserializer.class);
 

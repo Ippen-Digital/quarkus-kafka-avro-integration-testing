@@ -21,6 +21,6 @@ public class ReactiveDonatorExtractor {
     }
 
     private Donator toSimpleName(Donation sourceEvent) {
-        return new Donator(String.format("%s %s", sourceEvent.getPrename(), sourceEvent.getSurname()));
+        return new Donator(String.format("%s %s", sourceEvent.getPrename(), sourceEvent.getSurname()), null);
     }
 }

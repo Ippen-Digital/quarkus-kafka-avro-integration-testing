@@ -112,3 +112,8 @@ messaging: [ReactiveDonatorExtractorTest.java](src/test/java/de/id/quarkus/kafka
 
 Implementation as Kafka streaming
 topology: [KStreamsDonatorExtractorTest.java](src/test/java/de/id/quarkus/kafka/testing/kafkastreams/KStreamsDonatorExtractorTest.java)
+
+#### Sample scenario: enrich extracted donators with donation project´s name of the donation collectors
+
+Implementation as Kafka streaming
+topology: [KStreamsDonatorEnrichmentTest.java](src/test/java/de/id/quarkus/kafka/testing/kafkastreams/KStreamsDonatorEnrichmentTest.java)

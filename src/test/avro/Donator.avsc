@@ -10,6 +10,13 @@
         "string"
       ],
       "default": null
+    },
+    {
+      "name": "nameOfDonationProject",
+      "type": [
+        "null",
+        "string"
+      ]
     }
   ]
 }
