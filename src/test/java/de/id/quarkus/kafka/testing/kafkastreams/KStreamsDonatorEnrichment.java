@@ -13,6 +13,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.GlobalKTable;
+import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -38,13 +39,25 @@ public class KStreamsDonatorEnrichment {
         GlobalKTable<Integer, DonationCollector> collectors = builder.globalTable(
                 DONATION_COLLECTOR_TOPIC, Consumed.with(Serdes.Integer(), buildAvroValueSerde(DonationCollector.class)));
 
-        builder.stream(DONATION_TOPIC, Consumed.with(Serdes.Integer(), buildAvroValueSerde(Donation.class)))
+        KStream<Integer, Donation> donationStream = builder.stream(DONATION_TOPIC, Consumed.with(Serdes.Integer(), buildAvroValueSerde(Donation.class)));
+        donationStream
                 .join(
                         collectors,
                         (key, donation) -> donation.getDonationCollectorId(),
                         this::toDonator
                 )
                 .to(DONATOR_TOPIC, Produced.with(Serdes.Integer(), buildAvroValueSerde(Donator.class)));
+
+        donationStream
+                .join(
+                        collectors,
+                        (key, donation) -> donation.getDonationCollectorId(),
+                        (donation, donationCollector) -> {
+                            donationCollector.setBalance(donationCollector.getBalance() + donation.getAmount());
+                            return donationCollector;
+                        }
+                )
+                .to(DONATION_COLLECTOR_TOPIC, Produced.with(Serdes.Integer(), buildAvroValueSerde(DonationCollector.class)));
         return builder.build();
     }
 

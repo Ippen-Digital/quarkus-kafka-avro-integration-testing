@@ -63,6 +63,25 @@ class KStreamsDonatorEnrichmentTest {
         assertThat(donators.get(0).getNameOfDonationProject()).isEqualTo("Project 222");
     }
 
+    @Test
+    void shouldAddTheMoneyOnTheDonationCollector() throws InterruptedException, ExecutionException, TimeoutException {
+        List<DonationCollector> donationCollectors = donationCollectors();
+        testClusterClient.sendRecords(DONATION_COLLECTOR_TOPIC, donationCollectors, IntegerSerializer.class, (integer, donationCollector) -> donationCollector.getId());
+
+        Future<List<DonationCollector>> receiveCollectors = testClusterClient.waitForRecords(DONATION_COLLECTOR_TOPIC, "donator-collections", 1, IntegerDeserializer.class);
+
+        Donation donation = new Donation("Max", "Mustermann", 10.0, 222);
+        testClusterClient.sendRecords(DONATION_TOPIC, Collections.singletonList(donation), IntegerSerializer.class, (index, don) -> index);
+
+        List<DonationCollector> updatedDonationCollectors = receiveCollectors.get(MAX_CONSUMER_WAIT_TIME, TimeUnit.MILLISECONDS);
+
+        assertThat(updatedDonationCollectors).hasSize(1);
+
+        DonationCollector updatedDonationCollector = updatedDonationCollectors.get(0);
+        assertThat(updatedDonationCollector.getId()).isEqualTo(222);
+        assertThat(updatedDonationCollector.getBalance()).isEqualTo(donation.getAmount());
+    }
+
     private List<DonationCollector> donationCollectors() {
         List<DonationCollector> list = new ArrayList<>();
         list.add(new DonationCollector(111, "Project 111", 0D));
