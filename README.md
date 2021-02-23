@@ -2,7 +2,11 @@
 
 **A testing library for Quarkus projects implementing Kafka with Avro.**
 
-Example integration-test code:
+### Overview
+
+![Overview](documentation/integration_testing_overview.jpeg)
+
+### Example integration-test code:
 
 ```java
 @QuarkusTest
