@@ -12,11 +12,13 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
- * A Quarkus test resource bootstrapping a Confluent Kafka stack incl. Kafka, schema registry and zookeeper by testcontainers.<br>
+ * A Quarkus test resource bootstrapping a Confluent Kafka stack incl. Kafka, schema registry and zookeeper by
+ * testcontainers.<br>
  * Integrated as @{@link io.quarkus.test.common.QuarkusTestResource}<br>
  * <p>
  * Version of used Confluent can be customized as initArg: <br>
- * <b>@QuarkusTestResource(value = ConfluentStack.class, initArgs = { @ResourceArg(name = ConfluentStack.CONFLUENT_VERSION_ARG, value = "5.3.1")})</b><br>
+ * <b>@QuarkusTestResource(value = ConfluentStack.class, initArgs = { @ResourceArg(name = ConfluentStack
+ * .CONFLUENT_VERSION_ARG, value = "5.3.1")})</b><br>
  * If not set CONFLUENT_VERSION_DEFAULT will be used. <br>
  * <p>
  * Automatically injects {@link ConfluentStackClient} on fields of the test suite (no annotation needed) <br>
@@ -29,7 +31,8 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
     private DockerImageName kafkaImage;
     private DockerImageName registryImage;
     String kafkaNetworkAlias = "kafka";
-
+    String incoming;
+    String outgoing;
     Network network;
     KafkaContainer kafka;
     ConfluentSchemaRegistryContainer schemaRegistry;
@@ -40,6 +43,8 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
         String confluentVersion = initArgs.getOrDefault(CONFLUENT_VERSION_ARG, CONFLUENT_VERSION_DEFAULT);
         kafkaImage = DockerImageName.parse(String.format("confluentinc/cp-kafka:%s", confluentVersion));
         registryImage = DockerImageName.parse(String.format("confluentinc/cp-schema-registry:%s", confluentVersion));
+        incoming = initArgs.get("incoming");
+        outgoing = initArgs.get("outgoing");
     }
 
     @Override
@@ -64,6 +69,14 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
         properties.put("quarkus.kafka-streams.bootstrap-servers", kafka.getBootstrapServers());
         properties.put("mp.messaging.connector.smallrye-kafka.schema.registry.url", schemaRegistry.getUrl());
         properties.put("quarkus.kafka-streams.schema-registry-url", schemaRegistry.getUrl());
+        if (Objects.nonNull(incoming)) {
+            properties.put(String.format("mp.messaging.incoming.%s.bootstrap.servers", incoming), kafka.getBootstrapServers());
+            properties.put(String.format("mp.messaging.incoming.%s.schema.registry.url", incoming), schemaRegistry.getUrl());
+        }
+        if (Objects.nonNull(outgoing)) {
+            properties.put(String.format("mp.messaging.outgoing.%s.bootstrap.servers", outgoing), kafka.getBootstrapServers());
+            properties.put(String.format("mp.messaging.outgoing.%s.schema.registry.url", outgoing), schemaRegistry.getUrl());
+        }
         return properties;
     }
 
