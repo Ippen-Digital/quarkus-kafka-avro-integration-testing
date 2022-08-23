@@ -66,9 +66,6 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
 
         Map<String, String> properties = new HashMap<>();
         properties.put("kafka.bootstrap.servers", kafka.getBootstrapServers());
-        properties.put("quarkus.kafka-streams.bootstrap-servers", kafka.getBootstrapServers());
-        properties.put("mp.messaging.connector.smallrye-kafka.schema.registry.url", schemaRegistry.getUrl());
-        properties.put("quarkus.kafka-streams.schema-registry-url", schemaRegistry.getUrl());
         if (Objects.nonNull(incoming)) {
             properties.put(String.format("mp.messaging.incoming.%s.bootstrap.servers", incoming), kafka.getBootstrapServers());
             properties.put(String.format("mp.messaging.incoming.%s.schema.registry.url", incoming), schemaRegistry.getUrl());
@@ -77,6 +74,9 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
             properties.put(String.format("mp.messaging.outgoing.%s.bootstrap.servers", outgoing), kafka.getBootstrapServers());
             properties.put(String.format("mp.messaging.outgoing.%s.schema.registry.url", outgoing), schemaRegistry.getUrl());
         }
+        properties.put("quarkus.kafka-streams.bootstrap-servers", kafka.getBootstrapServers());
+        properties.put("mp.messaging.connector.smallrye-kafka.schema.registry.url", schemaRegistry.getUrl());
+        properties.put("quarkus.kafka-streams.schema-registry-url", schemaRegistry.getUrl());
         return properties;
     }
 
