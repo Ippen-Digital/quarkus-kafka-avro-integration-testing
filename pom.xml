@@ -42,12 +42,11 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <quarkus.container-image.tag>local-SNAPSHOT-${user.name}</quarkus.container-image.tag>
-        <quarkus.platform.artifact-id>quarkus-universe-bom</quarkus.platform.artifact-id>
-        <quarkus.platform.group-id>io.quarkus</quarkus.platform.group-id>
-        <quarkus.platform.version>1.11.1.Final</quarkus.platform.version>
-        <testcontainers.version>1.15.1</testcontainers.version>
-        <quarkus-plugin.version>1.11.1.Final</quarkus-plugin.version>
-        <surefire-plugin.version>2.22.1</surefire-plugin.version>
+        <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
+        <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
+        <quarkus.platform.version>2.11.2.Final</quarkus.platform.version>
+        <testcontainers.version>1.17.3</testcontainers.version>
+        <surefire-plugin.version>3.0.0-M7</surefire-plugin.version>
         <jacoco.version>0.8.6</jacoco.version>
     </properties>
 
@@ -71,6 +70,10 @@
     </dependencyManagement>
 
     <dependencies>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-arc</artifactId>
+        </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-test-common</artifactId>
@@ -174,9 +177,9 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>io.quarkus</groupId>
+                <groupId>${quarkus.platform.group-id}</groupId>
                 <artifactId>quarkus-maven-plugin</artifactId>
-                <version>${quarkus-plugin.version}</version>
+                <version>${quarkus.platform.version}</version>
                 <extensions>true</extensions>
                 <executions>
                     <execution>
