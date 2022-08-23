@@ -27,8 +27,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
 @QuarkusTestResource(value = ConfluentStack.class, initArgs = {
-        @ResourceArg(value="incoming", name="source-topic"),
-        @ResourceArg(value="outgoing", name="target-topic")
+        @ResourceArg(value = "incoming", name = "source-topic"),
+        @ResourceArg(value = "incomingTopic", name = "reactivemessaging.source-topic"),
+        @ResourceArg(value = "outgoing", name = "target-topic"),
+        @ResourceArg(value = "outgoingTopic", name = "reactivemessaging.target-topic")
 })
 @TestProfile(DonatorExtractorProfile.class)
 class MultiBootstrapDonatorExtractorTest {
@@ -49,9 +51,11 @@ class MultiBootstrapDonatorExtractorTest {
         Donation donation = new Donation("Max", "Mustermann", 10.0, 111);
         List<Donation> donationToSend = IntStream.range(0, 10).mapToObj(i -> donation).collect(Collectors.toList());
 
-        Future<List<Donator>> receiveFuture = testClusterClient.waitForRecords(TARGET_TOPIC, "testConsumerGroup", donationToSend.size(), StringDeserializer.class);
+        Future<List<Donator>> receiveFuture = testClusterClient.waitForRecords(TARGET_TOPIC, "testConsumerGroup",
+                donationToSend.size(), StringDeserializer.class);
 
-        testClusterClient.sendRecords(SOURCE_TOPIC, donationToSend, StringSerializer.class, (index, event) -> String.valueOf(index));
+        testClusterClient.sendRecords(SOURCE_TOPIC, donationToSend, StringSerializer.class,
+                (index, event) -> String.valueOf(index));
 
         List<Donator> receivedDonators = receiveFuture.get(MAX_CONSUMER_WAIT_TIME, TimeUnit.MILLISECONDS);
 

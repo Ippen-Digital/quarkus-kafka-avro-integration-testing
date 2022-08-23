@@ -32,7 +32,9 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
     private DockerImageName registryImage;
     String kafkaNetworkAlias = "kafka";
     String incoming;
+    String incomingTopic;
     String outgoing;
+    String outgoingTopic;
     Network network;
     KafkaContainer kafka;
     ConfluentSchemaRegistryContainer schemaRegistry;
@@ -44,7 +46,9 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
         kafkaImage = DockerImageName.parse(String.format("confluentinc/cp-kafka:%s", confluentVersion));
         registryImage = DockerImageName.parse(String.format("confluentinc/cp-schema-registry:%s", confluentVersion));
         incoming = initArgs.get("incoming");
+        incomingTopic = initArgs.get("incomingTopic");
         outgoing = initArgs.get("outgoing");
+        outgoingTopic = initArgs.get("outgoingTopic");
     }
 
     @Override
@@ -67,10 +71,12 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
         Map<String, String> properties = new HashMap<>();
         properties.put("kafka.bootstrap.servers", kafka.getBootstrapServers());
         if (Objects.nonNull(incoming)) {
+            properties.put(String.format("mp.messaging.incoming.%s.topic", incoming), incomingTopic);
             properties.put(String.format("mp.messaging.incoming.%s.bootstrap.servers", incoming), kafka.getBootstrapServers());
             properties.put(String.format("mp.messaging.incoming.%s.schema.registry.url", incoming), schemaRegistry.getUrl());
         }
         if (Objects.nonNull(outgoing)) {
+            properties.put(String.format("mp.messaging.outgoing.%s.topic", outgoing), outgoingTopic);
             properties.put(String.format("mp.messaging.outgoing.%s.bootstrap.servers", outgoing), kafka.getBootstrapServers());
             properties.put(String.format("mp.messaging.outgoing.%s.schema.registry.url", outgoing), schemaRegistry.getUrl());
         }
