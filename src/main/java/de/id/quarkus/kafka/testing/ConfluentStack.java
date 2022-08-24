@@ -43,46 +43,51 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
     @Override
     public void init(Map<String, String> initArgs) {
         String confluentVersion = initArgs.getOrDefault(CONFLUENT_VERSION_ARG, CONFLUENT_VERSION_DEFAULT);
-        kafkaImage = DockerImageName.parse(String.format("confluentinc/cp-kafka:%s", confluentVersion));
-        registryImage = DockerImageName.parse(String.format("confluentinc/cp-schema-registry:%s", confluentVersion));
-        incoming = initArgs.get("incoming");
-        incomingTopic = initArgs.get("incomingTopic");
-        outgoing = initArgs.get("outgoing");
-        outgoingTopic = initArgs.get("outgoingTopic");
+        this.kafkaImage = DockerImageName.parse(String.format("confluentinc/cp-kafka:%s", confluentVersion));
+        this.registryImage = DockerImageName.parse(
+                String.format("confluentinc/cp-schema-registry:%s", confluentVersion));
+        this.incoming = initArgs.getOrDefault("incoming", "source-topic");
+        this.incomingTopic = initArgs.getOrDefault("incomingTopic", "reactivemessaging.source-topic");
+        this.outgoing = initArgs.getOrDefault("outgoing", "target-topic");
+        this.outgoingTopic = initArgs.getOrDefault("outgoingTopic", "reactivemessaging.target-topic");
     }
 
     @Override
     public Map<String, String> start() {
-        network = Network.newNetwork();
+        this.network = Network.newNetwork();
 
         this.kafka = new KafkaContainer(kafkaImage)
                 .withEnv("KAFKA_DELETE_TOPIC_ENABLE", "true")
-                .withNetwork(network)
-                .withNetworkAliases(kafkaNetworkAlias);
+                .withNetwork(this.network)
+                .withNetworkAliases(this.kafkaNetworkAlias);
         this.kafka.start();
 
-        String dockerNetworkKafkaConnectString = String.format("%s:%d", kafkaNetworkAlias, 9092);
-        schemaRegistry = new ConfluentSchemaRegistryContainer(registryImage, dockerNetworkKafkaConnectString)
-                .withNetwork(network);
-        schemaRegistry.start();
+        String dockerNetworkKafkaConnectString = String.format("%s:%d", this.kafkaNetworkAlias, 9092);
+        this.schemaRegistry = new ConfluentSchemaRegistryContainer(registryImage, dockerNetworkKafkaConnectString)
+                .withNetwork(this.network);
+        this.schemaRegistry.start();
 
-        testClusterClient = new ConfluentStackClient(kafka.getBootstrapServers(), schemaRegistry.getUrl());
+        testClusterClient = new ConfluentStackClient(kafka.getBootstrapServers(), this.schemaRegistry.getUrl());
 
         Map<String, String> properties = new HashMap<>();
         properties.put("kafka.bootstrap.servers", kafka.getBootstrapServers());
-        if (Objects.nonNull(incoming)) {
-            properties.put(String.format("mp.messaging.incoming.%s.topic", incoming), incomingTopic);
-            properties.put(String.format("mp.messaging.incoming.%s.bootstrap.servers", incoming), kafka.getBootstrapServers());
-            properties.put(String.format("mp.messaging.incoming.%s.schema.registry.url", incoming), schemaRegistry.getUrl());
-        }
-        if (Objects.nonNull(outgoing)) {
-            properties.put(String.format("mp.messaging.outgoing.%s.topic", outgoing), outgoingTopic);
-            properties.put(String.format("mp.messaging.outgoing.%s.bootstrap.servers", outgoing), kafka.getBootstrapServers());
-            properties.put(String.format("mp.messaging.outgoing.%s.schema.registry.url", outgoing), schemaRegistry.getUrl());
-        }
+
+        properties.put(String.format("mp.messaging.incoming.%s.topic", incoming), incomingTopic);
+        properties.put(String.format("mp.messaging.incoming.%s.bootstrap.servers", incoming),
+                kafka.getBootstrapServers());
+        properties.put(String.format("mp.messaging.incoming.%s.schema.registry.url", incoming),
+                this.schemaRegistry.getUrl());
+        properties.put(String.format("mp.messaging.incoming.%s.broadcast", incoming), "true");
+        properties.put(String.format("mp.messaging.outgoing.%s.topic", outgoing), outgoingTopic);
+        properties.put(String.format("mp.messaging.outgoing.%s.bootstrap.servers", outgoing),
+                kafka.getBootstrapServers());
+        properties.put(String.format("mp.messaging.outgoing.%s.schema.registry.url", outgoing),
+                this.schemaRegistry.getUrl());
+        properties.put(String.format("mp.messaging.outgoing.%s.merge", outgoing), "true");
+
         properties.put("quarkus.kafka-streams.bootstrap-servers", kafka.getBootstrapServers());
-        properties.put("mp.messaging.connector.smallrye-kafka.schema.registry.url", schemaRegistry.getUrl());
-        properties.put("quarkus.kafka-streams.schema-registry-url", schemaRegistry.getUrl());
+        properties.put("mp.messaging.connector.smallrye-kafka.schema.registry.url", this.schemaRegistry.getUrl());
+        properties.put("quarkus.kafka-streams.schema-registry-url", this.schemaRegistry.getUrl());
         return properties;
     }
 
@@ -101,14 +106,15 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
                     try {
                         field.set(testInstance, testClusterClient);
                     } catch (IllegalAccessException e) {
-                        throw new RuntimeException(String.format("Error while injecting %s to instance %s", ConfluentStackClient.class.getName(), testInstance), e);
+                        throw new RuntimeException(String.format("Error while injecting %s to instance %s",
+                                ConfluentStackClient.class.getName(), testInstance), e);
                     }
                 });
     }
 
     @Override
     public void stop() {
-        kafka.close();
-        schemaRegistry.close();
+        this.kafka.close();
+        this.schemaRegistry.close();
     }
 }

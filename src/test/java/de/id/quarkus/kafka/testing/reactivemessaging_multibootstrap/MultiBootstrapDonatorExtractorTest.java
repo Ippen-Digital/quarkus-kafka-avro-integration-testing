@@ -5,6 +5,7 @@ import de.id.avro.Donator;
 import de.id.quarkus.kafka.testing.ConfluentStack;
 import de.id.quarkus.kafka.testing.ConfluentStackClient;
 import de.id.quarkus.kafka.testing.scenarios.DonatorExtractorProfile;
+import de.id.quarkus.kafka.testing.scenarios.MultiBootstrapDonatorExtractorProfile;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
@@ -27,12 +28,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
 @QuarkusTestResource(value = ConfluentStack.class, initArgs = {
-        @ResourceArg(value = "incoming", name = "source-topic"),
-        @ResourceArg(value = "incomingTopic", name = "reactivemessaging.source-topic"),
-        @ResourceArg(value = "outgoing", name = "target-topic"),
-        @ResourceArg(value = "outgoingTopic", name = "reactivemessaging.target-topic")
+        @ResourceArg(name = "incoming", value = "source-topic"),
+        @ResourceArg(name = "incomingTopic", value = "reactivemessaging.source-topic"),
+        @ResourceArg(name = "outgoing", value = "target-topic"),
+        @ResourceArg(name = "outgoingTopic", value = "reactivemessaging.target-topic")
 })
-@TestProfile(DonatorExtractorProfile.class)
 class MultiBootstrapDonatorExtractorTest {
 
     public static final int MAX_CONSUMER_WAIT_TIME = 5000;
