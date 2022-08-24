@@ -47,18 +47,16 @@ class MultiBootstrapDonatorExtractorTest {
     }
 
     @Test
-    void shouldExtractADonatorOutOfEveryDonation() throws InterruptedException, ExecutionException, TimeoutException {
+    void shouldExtractDonatorsName() throws InterruptedException, ExecutionException, TimeoutException {
         Donation donation = new Donation("Max", "Mustermann", 10.0, 111);
-        List<Donation> donationToSend = IntStream.range(0, 10).mapToObj(i -> donation).collect(Collectors.toList());
 
-        Future<List<Donator>> receiveFuture = testClusterClient.waitForRecords(TARGET_TOPIC, "testConsumerGroup",
-                donationToSend.size(), StringDeserializer.class);
+        Future<List<Donator>> receiveFuture = testClusterClient.waitForRecords(TARGET_TOPIC, "testConsumerGroup", 1, StringDeserializer.class);
 
-        testClusterClient.sendRecords(SOURCE_TOPIC, donationToSend, StringSerializer.class,
-                (index, event) -> String.valueOf(index));
+        testClusterClient.sendRecords(SOURCE_TOPIC, Collections.singletonList(donation), StringSerializer.class, (index, event) -> String.valueOf(index));
 
         List<Donator> receivedDonators = receiveFuture.get(MAX_CONSUMER_WAIT_TIME, TimeUnit.MILLISECONDS);
 
-        assertThat(receivedDonators).hasSameSizeAs(donationToSend);
+        assertThat(receivedDonators).hasSize(1);
+        assertThat(receivedDonators.get(0).getName()).asString().isEqualTo("Max Mustermann");
     }
 }
