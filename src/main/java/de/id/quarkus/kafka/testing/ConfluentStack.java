@@ -90,8 +90,8 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
                 this.schemaRegistry.getUrl());
         properties.put(String.format("mp.messaging.outgoing.%s.merge", outgoing), "true");
 
-        properties.put("quarkus.kafka-streams.bootstrap-servers", kafka.getBootstrapServers());
         properties.put("mp.messaging.connector.smallrye-kafka.schema.registry.url", this.schemaRegistry.getUrl());
+        properties.put("quarkus.kafka-streams.bootstrap-servers", kafka.getBootstrapServers());
         properties.put("quarkus.kafka-streams.schema-registry-url", this.schemaRegistry.getUrl());
         return properties;
     }
