@@ -28,16 +28,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
 @QuarkusTestResource(value = ConfluentStack.class, initArgs = {
-        @ResourceArg(name = "incoming", value = "source-topic"),
-        @ResourceArg(name = "incomingTopic", value = "reactivemessaging.source-topic"),
-        @ResourceArg(name = "outgoing", value = "target-topic"),
-        @ResourceArg(name = "outgoingTopic", value = "reactivemessaging.target-topic")
+        @ResourceArg(name = "incoming", value = "mb-source"),
+        @ResourceArg(name = "incomingTopic", value = "multibootstrap.source-topic"),
+        @ResourceArg(name = "outgoing", value = "mb-target"),
+        @ResourceArg(name = "outgoingTopic", value = "multibootstrap.target-topic")
 })
 class MultiBootstrapDonatorExtractorTest {
 
     public static final int MAX_CONSUMER_WAIT_TIME = 5000;
-    private static final String SOURCE_TOPIC = "reactivemessaging.source-topic";
-    private static final String TARGET_TOPIC = "reactivemessaging.target-topic";
+    private static final String SOURCE_TOPIC = "multibootstrap.source-topic";
+    private static final String TARGET_TOPIC = "multibootstrap.target-topic";
 
     ConfluentStackClient testClusterClient;
 
@@ -45,10 +45,22 @@ class MultiBootstrapDonatorExtractorTest {
     void setUp() {
         testClusterClient.createTopics(SOURCE_TOPIC, TARGET_TOPIC);
     }
+    @Test
+    void shouldExtractADonatorOutOfEveryDonation() throws InterruptedException, ExecutionException, TimeoutException {
+        Donation donation = new Donation("Foo", "Bar", 10.0, 111);
+        List<Donation> donationToSend = IntStream.range(0, 10).mapToObj(i -> donation).collect(Collectors.toList());
 
+        Future<List<Donator>> receiveFuture = testClusterClient.waitForRecords(TARGET_TOPIC, "testConsumerGroup", donationToSend.size(), StringDeserializer.class);
+
+        testClusterClient.sendRecords(SOURCE_TOPIC, donationToSend, StringSerializer.class, (index, event) -> String.valueOf(index));
+
+        List<Donator> receivedDonators = receiveFuture.get(MAX_CONSUMER_WAIT_TIME, TimeUnit.MILLISECONDS);
+
+        assertThat(receivedDonators).hasSameSizeAs(donationToSend);
+    }
     @Test
     void shouldExtractDonatorsName() throws InterruptedException, ExecutionException, TimeoutException {
-        Donation donation = new Donation("Max", "Mustermann", 10.0, 111);
+        Donation donation = new Donation("Foo", "Bar", 10.0, 111);
 
         Future<List<Donator>> receiveFuture = testClusterClient.waitForRecords(TARGET_TOPIC, "testConsumerGroup", 1, StringDeserializer.class);
 
@@ -57,6 +69,6 @@ class MultiBootstrapDonatorExtractorTest {
         List<Donator> receivedDonators = receiveFuture.get(MAX_CONSUMER_WAIT_TIME, TimeUnit.MILLISECONDS);
 
         assertThat(receivedDonators).hasSize(1);
-        assertThat(receivedDonators.get(0).getName()).asString().isEqualTo("Max Mustermann");
+        assertThat(receivedDonators.get(0).getName()).asString().isEqualTo("Foo Bar");
     }
 }

@@ -13,8 +13,8 @@ import java.time.Instant;
 @ApplicationScoped
 public class MultiBootstrapDonatorExtractor {
 
-    @Incoming("source-topic")
-    @Outgoing("target-topic")
+    @Incoming("mb-source")
+    @Outgoing("mb-target")
     public Multi<Record<String, Donator>> transformNames(Donation sourceEvent) {
         return Multi.createFrom().item(sourceEvent)
                 .map(sourceTopicEvent -> Record.of(Instant.now().toString(), toSimpleName(sourceEvent)));
