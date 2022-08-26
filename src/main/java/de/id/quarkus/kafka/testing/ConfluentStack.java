@@ -5,10 +5,7 @@ import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.utility.DockerImageName;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
@@ -46,54 +43,56 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
         this.kafkaImage = DockerImageName.parse(String.format("confluentinc/cp-kafka:%s", confluentVersion));
         this.registryImage = DockerImageName.parse(
                 String.format("confluentinc/cp-schema-registry:%s", confluentVersion));
-        this.incoming = initArgs.getOrDefault("incoming", "mb-source");
-        this.incomingTopic = initArgs.getOrDefault("incomingTopic", "multibootstrap.source-topic");
-        this.outgoing = initArgs.getOrDefault("outgoing", "mb-target");
-        this.outgoingTopic = initArgs.getOrDefault("outgoingTopic", "multibootstrap.target-topic");
-    }
+        this.incoming = initArgs.get("incoming");
+        this.incomingTopic = initArgs.get("incomingTopic");
+        this.outgoing = initArgs.get("outgoing");
+        this.outgoingTopic = initArgs.get("outgoingTopic");
 
-    @Override
-    public Map<String, String> start() {
         this.network = Network.newNetwork();
-
         this.kafka = new KafkaContainer(kafkaImage)
                 .withEnv("KAFKA_DELETE_TOPIC_ENABLE", "true")
                 .withNetwork(this.network)
                 .withNetworkAliases(this.kafkaNetworkAlias);
-        this.kafka.start();
-
         String dockerNetworkKafkaConnectString = String.format("%s:%d", this.kafkaNetworkAlias, 9092);
         this.schemaRegistry = new ConfluentSchemaRegistryContainer(registryImage, dockerNetworkKafkaConnectString)
                 .withNetwork(this.network);
-        this.schemaRegistry.start();
+    }
 
-        testClusterClient = new ConfluentStackClient(kafka.getBootstrapServers(), this.schemaRegistry.getUrl());
+    @Override
+    public Map<String, String> start() {
+        if (this.testClusterClient == null && this.kafka != null) {
+            this.kafka.start();
+            this.schemaRegistry.start();
+            testClusterClient = new ConfluentStackClient(kafka.getBootstrapServers(), this.schemaRegistry.getUrl());
 
-        Map<String, String> properties = new HashMap<>();
-        properties.put("kafka.bootstrap.servers", kafka.getBootstrapServers());
+            Map<String, String> properties = new HashMap<>();
+            properties.put("kafka.bootstrap.servers", kafka.getBootstrapServers());
 
-        properties.put(String.format("mp.messaging.incoming.%s.connector", incoming), "smallrye-kafka");
-        properties.put(String.format("mp.messaging.incoming.%s.allow.auto.create.topics", incoming), "false");
-        properties.put(String.format("mp.messaging.incoming.%s.topic", incoming), incomingTopic);
-        properties.put(String.format("mp.messaging.incoming.%s.bootstrap.servers", incoming),
-                kafka.getBootstrapServers());
-        properties.put(String.format("mp.messaging.incoming.%s.schema.registry.url", incoming),
-                this.schemaRegistry.getUrl());
-        properties.put(String.format("mp.messaging.incoming.%s.broadcast", incoming), "true");
+            properties.put(String.format("mp.messaging.incoming.%s.connector", incoming), "smallrye-kafka");
+            properties.put(String.format("mp.messaging.incoming.%s.allow.auto.create.topics", incoming), "false");
+            properties.put(String.format("mp.messaging.incoming.%s.topic", incoming), incomingTopic);
+            properties.put(String.format("mp.messaging.incoming.%s.bootstrap.servers", incoming),
+                    kafka.getBootstrapServers());
+            properties.put(String.format("mp.messaging.incoming.%s.schema.registry.url", incoming),
+                    this.schemaRegistry.getUrl());
+            properties.put(String.format("mp.messaging.incoming.%s.broadcast", incoming), "true");
 
-        properties.put(String.format("mp.messaging.outgoing.%s.connector", outgoing), "smallrye-kafka");
-        properties.put(String.format("mp.messaging.outgoing.%s.allow.auto.create.topics", outgoing), "false");
-        properties.put(String.format("mp.messaging.outgoing.%s.topic", outgoing), outgoingTopic);
-        properties.put(String.format("mp.messaging.outgoing.%s.bootstrap.servers", outgoing),
-                kafka.getBootstrapServers());
-        properties.put(String.format("mp.messaging.outgoing.%s.schema.registry.url", outgoing),
-                this.schemaRegistry.getUrl());
-        properties.put(String.format("mp.messaging.outgoing.%s.merge", outgoing), "true");
+            properties.put(String.format("mp.messaging.outgoing.%s.connector", outgoing), "smallrye-kafka");
+            properties.put(String.format("mp.messaging.outgoing.%s.allow.auto.create.topics", outgoing), "false");
+            properties.put(String.format("mp.messaging.outgoing.%s.topic", outgoing), outgoingTopic);
+            properties.put(String.format("mp.messaging.outgoing.%s.bootstrap.servers", outgoing),
+                    kafka.getBootstrapServers());
+            properties.put(String.format("mp.messaging.outgoing.%s.schema.registry.url", outgoing),
+                    this.schemaRegistry.getUrl());
+            properties.put(String.format("mp.messaging.outgoing.%s.merge", outgoing), "true");
 
-        properties.put("mp.messaging.connector.smallrye-kafka.schema.registry.url", this.schemaRegistry.getUrl());
-        properties.put("quarkus.kafka-streams.bootstrap-servers", kafka.getBootstrapServers());
-        properties.put("quarkus.kafka-streams.schema-registry-url", this.schemaRegistry.getUrl());
-        return properties;
+            properties.put("mp.messaging.connector.smallrye-kafka.schema.registry.url", this.schemaRegistry.getUrl());
+            properties.put("quarkus.kafka-streams.bootstrap-servers", kafka.getBootstrapServers());
+            properties.put("quarkus.kafka-streams.schema-registry-url", this.schemaRegistry.getUrl());
+            return properties;
+        } else {
+            return Collections.emptyMap();
+        }
     }
 
     @Override
@@ -119,7 +118,11 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
 
     @Override
     public void stop() {
-        this.kafka.close();
-        this.schemaRegistry.close();
+        if (kafka != null) {
+            kafka.close();
+        }
+        if (schemaRegistry != null) {
+            schemaRegistry.close();
+        }
     }
 }

@@ -4,10 +4,8 @@ import de.id.avro.Donation;
 import de.id.avro.Donator;
 import de.id.quarkus.kafka.testing.ConfluentStack;
 import de.id.quarkus.kafka.testing.ConfluentStackClient;
-import de.id.quarkus.kafka.testing.scenarios.DonatorExtractorProfile;
 import de.id.quarkus.kafka.testing.scenarios.MultiBootstrapDonatorExtractorProfile;
 import io.quarkus.test.common.QuarkusTestResource;
-import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -27,12 +25,8 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
-@QuarkusTestResource(value = ConfluentStack.class, initArgs = {
-        @ResourceArg(name = "incoming", value = "mb-source"),
-        @ResourceArg(name = "incomingTopic", value = "multibootstrap.source-topic"),
-        @ResourceArg(name = "outgoing", value = "mb-target"),
-        @ResourceArg(name = "outgoingTopic", value = "multibootstrap.target-topic")
-})
+@QuarkusTestResource(value = ConfluentStack.class)
+@TestProfile(MultiBootstrapDonatorExtractorProfile.class)
 class MultiBootstrapDonatorExtractorTest {
 
     public static final int MAX_CONSUMER_WAIT_TIME = 5000;
