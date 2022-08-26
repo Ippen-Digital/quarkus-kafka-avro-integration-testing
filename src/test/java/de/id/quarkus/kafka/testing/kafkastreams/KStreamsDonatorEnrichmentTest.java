@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
 @TestProfile(DonatorEnrichmentProfile.class)
-@QuarkusTestResource(ConfluentStack.class)
+@QuarkusTestResource(value = ConfluentStack.class, restrictToAnnotatedClass = true)
 class KStreamsDonatorEnrichmentTest {
 
     public static final int MAX_CONSUMER_WAIT_TIME = 5000;
