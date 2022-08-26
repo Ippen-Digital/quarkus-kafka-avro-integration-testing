@@ -68,23 +68,28 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
             Map<String, String> properties = new HashMap<>();
             properties.put("kafka.bootstrap.servers", kafka.getBootstrapServers());
 
-            properties.put(String.format("mp.messaging.incoming.%s.connector", incoming), "smallrye-kafka");
-            properties.put(String.format("mp.messaging.incoming.%s.allow.auto.create.topics", incoming), "false");
-            properties.put(String.format("mp.messaging.incoming.%s.topic", incoming), incomingTopic);
-            properties.put(String.format("mp.messaging.incoming.%s.bootstrap.servers", incoming),
-                    kafka.getBootstrapServers());
-            properties.put(String.format("mp.messaging.incoming.%s.schema.registry.url", incoming),
-                    this.schemaRegistry.getUrl());
-            properties.put(String.format("mp.messaging.incoming.%s.broadcast", incoming), "true");
 
-            properties.put(String.format("mp.messaging.outgoing.%s.connector", outgoing), "smallrye-kafka");
-            properties.put(String.format("mp.messaging.outgoing.%s.allow.auto.create.topics", outgoing), "false");
-            properties.put(String.format("mp.messaging.outgoing.%s.topic", outgoing), outgoingTopic);
-            properties.put(String.format("mp.messaging.outgoing.%s.bootstrap.servers", outgoing),
-                    kafka.getBootstrapServers());
-            properties.put(String.format("mp.messaging.outgoing.%s.schema.registry.url", outgoing),
-                    this.schemaRegistry.getUrl());
-            properties.put(String.format("mp.messaging.outgoing.%s.merge", outgoing), "true");
+            if (incoming != null && incomingTopic != null) {
+                properties.put(String.format("mp.messaging.incoming.%s.connector", incoming), "smallrye-kafka");
+                properties.put(String.format("mp.messaging.incoming.%s.allow.auto.create.topics", incoming), "false");
+                properties.put(String.format("mp.messaging.incoming.%s.topic", incoming), incomingTopic);
+                properties.put(String.format("mp.messaging.incoming.%s.bootstrap.servers", incoming),
+                        kafka.getBootstrapServers());
+                properties.put(String.format("mp.messaging.incoming.%s.schema.registry.url", incoming),
+                        this.schemaRegistry.getUrl());
+                properties.put(String.format("mp.messaging.incoming.%s.broadcast", incoming), "true");
+            }
+
+            if (outgoing != null && outgoingTopic != null) {
+                properties.put(String.format("mp.messaging.outgoing.%s.connector", outgoing), "smallrye-kafka");
+                properties.put(String.format("mp.messaging.outgoing.%s.allow.auto.create.topics", outgoing), "false");
+                properties.put(String.format("mp.messaging.outgoing.%s.topic", outgoing), outgoingTopic);
+                properties.put(String.format("mp.messaging.outgoing.%s.bootstrap.servers", outgoing),
+                        kafka.getBootstrapServers());
+                properties.put(String.format("mp.messaging.outgoing.%s.schema.registry.url", outgoing),
+                        this.schemaRegistry.getUrl());
+                properties.put(String.format("mp.messaging.outgoing.%s.merge", outgoing), "true");
+            }
 
             properties.put("mp.messaging.connector.smallrye-kafka.schema.registry.url", this.schemaRegistry.getUrl());
             properties.put("quarkus.kafka-streams.bootstrap-servers", kafka.getBootstrapServers());
