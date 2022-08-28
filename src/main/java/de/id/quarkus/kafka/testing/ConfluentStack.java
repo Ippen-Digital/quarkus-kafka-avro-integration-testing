@@ -29,9 +29,7 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
     private DockerImageName registryImage;
     String kafkaNetworkAlias = "kafka";
     String incoming;
-    String incomingTopic;
     String outgoing;
-    String outgoingTopic;
     Network network;
     KafkaContainer kafka;
     ConfluentSchemaRegistryContainer schemaRegistry;
@@ -44,9 +42,7 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
         this.registryImage = DockerImageName.parse(
                 String.format("confluentinc/cp-schema-registry:%s", confluentVersion));
         this.incoming = initArgs.get("incoming");
-        this.incomingTopic = initArgs.get("incomingTopic");
         this.outgoing = initArgs.get("outgoing");
-        this.outgoingTopic = initArgs.get("outgoingTopic");
 
         this.network = Network.newNetwork();
         this.kafka = new KafkaContainer(kafkaImage)
@@ -69,20 +65,20 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
             properties.put("kafka.bootstrap.servers", kafka.getBootstrapServers());
 
 
-            if (incoming != null && incomingTopic != null) {
+            if (incoming != null) {
                 properties.put(String.format("mp.messaging.incoming.%s.connector", incoming), "smallrye-kafka");
                 properties.put(String.format("mp.messaging.incoming.%s.allow.auto.create.topics", incoming), "false");
-                properties.put(String.format("mp.messaging.incoming.%s.topic", incoming), incomingTopic);
+                properties.put(String.format("mp.messaging.incoming.%s.topic", incoming), "reactivemessaging.source-topic");
                 properties.put(String.format("mp.messaging.incoming.%s.bootstrap.servers", incoming),
                         kafka.getBootstrapServers());
                 properties.put(String.format("mp.messaging.incoming.%s.schema.registry.url", incoming),
                         this.schemaRegistry.getUrl());
             }
 
-            if (outgoing != null && outgoingTopic != null) {
+            if (outgoing != null) {
                 properties.put(String.format("mp.messaging.outgoing.%s.connector", outgoing), "smallrye-kafka");
                 properties.put(String.format("mp.messaging.outgoing.%s.allow.auto.create.topics", outgoing), "false");
-                properties.put(String.format("mp.messaging.outgoing.%s.topic", outgoing), outgoingTopic);
+                properties.put(String.format("mp.messaging.outgoing.%s.topic", outgoing), "reactivemessaging.target-topic");
                 properties.put(String.format("mp.messaging.outgoing.%s.bootstrap.servers", outgoing),
                         kafka.getBootstrapServers());
                 properties.put(String.format("mp.messaging.outgoing.%s.schema.registry.url", outgoing),

@@ -26,15 +26,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 @QuarkusTest
 @QuarkusTestResource(value = ConfluentStack.class, initArgs = {
         @ResourceArg(name = "incoming", value = "mb-source"),
-        @ResourceArg(name = "incomingTopic", value = "multibootstrap.source-topic"),
         @ResourceArg(name = "outgoing", value = "mb-target"),
-        @ResourceArg(name = "outgoingTopic", value = "multibootstrap.target-topic")
 }, restrictToAnnotatedClass = true)
 class MultiBootstrapDonatorExtractorTest {
 
     public static final int MAX_CONSUMER_WAIT_TIME = 5000;
-    private static final String SOURCE_TOPIC = "multibootstrap.source-topic";
-    private static final String TARGET_TOPIC = "multibootstrap.target-topic";
+    private static final String SOURCE_TOPIC = "reactivemessaging.source-topic";
+    private static final String TARGET_TOPIC = "reactivemessaging.target-topic";
 
     ConfluentStackClient testClusterClient;
 
