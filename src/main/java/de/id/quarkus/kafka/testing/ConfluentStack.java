@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
 
     public static final String CONFLUENT_VERSION_ARG = "confluentVersion";
-    public static final String CONFLUENT_VERSION_DEFAULT = "5.4.3";
+    public static final String CONFLUENT_VERSION_DEFAULT = "5.4.3"; // TODO: find a way to make it a variable according to cpu
     private DockerImageName kafkaImage;
     private DockerImageName registryImage;
     String kafkaNetworkAlias = "kafka";

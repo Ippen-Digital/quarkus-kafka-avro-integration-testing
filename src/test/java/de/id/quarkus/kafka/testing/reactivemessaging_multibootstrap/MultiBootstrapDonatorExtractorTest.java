@@ -24,10 +24,15 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
-@QuarkusTestResource(value = ConfluentStack.class, initArgs = {
-        @ResourceArg(name = "incoming", value = "mb-source"),
-        @ResourceArg(name = "outgoing", value = "mb-target"),
-}, restrictToAnnotatedClass = true)
+@QuarkusTestResource(
+        value = ConfluentStack.class,
+        initArgs = {
+                @ResourceArg(name = "incoming", value = "mb-source"),
+                @ResourceArg(name = "outgoing", value = "mb-target"),
+        },
+        // we need this to avoid unpredictable tests configuration due to double starts of ConfluenceStack:
+        // https://github.com/quarkusio/quarkus/issues/22025#:~:text=apply%20this%20argument%20to%20all%20tests
+        restrictToAnnotatedClass = true)
 class MultiBootstrapDonatorExtractorTest {
 
     public static final int MAX_CONSUMER_WAIT_TIME = 5000;
