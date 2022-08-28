@@ -77,7 +77,6 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
                         kafka.getBootstrapServers());
                 properties.put(String.format("mp.messaging.incoming.%s.schema.registry.url", incoming),
                         this.schemaRegistry.getUrl());
-                properties.put(String.format("mp.messaging.incoming.%s.broadcast", incoming), "true");
             }
 
             if (outgoing != null && outgoingTopic != null) {
@@ -88,7 +87,6 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
                         kafka.getBootstrapServers());
                 properties.put(String.format("mp.messaging.outgoing.%s.schema.registry.url", outgoing),
                         this.schemaRegistry.getUrl());
-                properties.put(String.format("mp.messaging.outgoing.%s.merge", outgoing), "true");
             }
 
             properties.put("mp.messaging.connector.smallrye-kafka.schema.registry.url", this.schemaRegistry.getUrl());
