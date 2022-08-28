@@ -130,6 +130,13 @@
             <version>3.15.0</version>
             <scope>test</scope>
         </dependency>
+        <!-- Use the new RocksDB version to be able to run on arm64 CPU -->
+        <dependency>
+            <groupId>org.rocksdb</groupId>
+            <artifactId>rocksdbjni</artifactId>
+            <version>7.4.5</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
