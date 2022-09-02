@@ -55,10 +55,10 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
 
     String getConfluentVersionDefault() {
         String cpuArch = System.getProperty("os.arch");
-        if (cpuArch == null || cpuArch.contains("x86")) {
-            return "7.2.1";
-        } else {
+        if (cpuArch != null && cpuArch.contains("aarch64")) {
             return "7.2.1.arm64";
+        } else {
+            return "7.2.1";
         }
     }
 
