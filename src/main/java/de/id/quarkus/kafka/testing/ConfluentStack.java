@@ -24,7 +24,6 @@ import java.util.stream.Stream;
 public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
 
     public static final String CONFLUENT_VERSION_ARG = "confluentVersion";
-    public static final String CONFLUENT_VERSION_DEFAULT = "5.4.3"; // TODO: find a way to make it a variable according to cpu
     private DockerImageName kafkaImage;
     private DockerImageName registryImage;
     String kafkaNetworkAlias = "kafka";
@@ -37,7 +36,7 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
 
     @Override
     public void init(Map<String, String> initArgs) {
-        String confluentVersion = initArgs.getOrDefault(CONFLUENT_VERSION_ARG, CONFLUENT_VERSION_DEFAULT);
+        String confluentVersion = initArgs.getOrDefault(CONFLUENT_VERSION_ARG, getConfluentVersionDefault());
         this.kafkaImage = DockerImageName.parse(String.format("confluentinc/cp-kafka:%s", confluentVersion));
         this.registryImage = DockerImageName.parse(
                 String.format("confluentinc/cp-schema-registry:%s", confluentVersion));
@@ -54,6 +53,15 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
                 .withNetwork(this.network);
     }
 
+    String getConfluentVersionDefault() {
+        String cpuArch = System.getProperty("os.arch");
+        if (cpuArch == null || cpuArch.contains("amd64")) {
+            return "7.2.1";
+        } else {
+            return "7.2.1.arm64";
+        }
+    }
+
     @Override
     public Map<String, String> start() {
         if (this.testClusterClient == null && this.kafka != null) {
@@ -68,7 +76,8 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
             if (incoming != null) {
                 properties.put(String.format("mp.messaging.incoming.%s.connector", incoming), "smallrye-kafka");
                 properties.put(String.format("mp.messaging.incoming.%s.allow.auto.create.topics", incoming), "false");
-                properties.put(String.format("mp.messaging.incoming.%s.topic", incoming), "reactivemessaging.source-topic");
+                properties.put(String.format("mp.messaging.incoming.%s.topic", incoming),
+                        "reactivemessaging.source-topic");
                 properties.put(String.format("mp.messaging.incoming.%s.bootstrap.servers", incoming),
                         kafka.getBootstrapServers());
                 properties.put(String.format("mp.messaging.incoming.%s.schema.registry.url", incoming),
@@ -78,7 +87,8 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
             if (outgoing != null) {
                 properties.put(String.format("mp.messaging.outgoing.%s.connector", outgoing), "smallrye-kafka");
                 properties.put(String.format("mp.messaging.outgoing.%s.allow.auto.create.topics", outgoing), "false");
-                properties.put(String.format("mp.messaging.outgoing.%s.topic", outgoing), "reactivemessaging.target-topic");
+                properties.put(String.format("mp.messaging.outgoing.%s.topic", outgoing),
+                        "reactivemessaging.target-topic");
                 properties.put(String.format("mp.messaging.outgoing.%s.bootstrap.servers", outgoing),
                         kafka.getBootstrapServers());
                 properties.put(String.format("mp.messaging.outgoing.%s.schema.registry.url", outgoing),
