@@ -36,8 +36,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MultiBootstrapDonatorExtractorTest {
 
     public static final int MAX_CONSUMER_WAIT_TIME = 5000;
-    private static final String SOURCE_TOPIC = "reactivemessaging.source-topic";
-    private static final String TARGET_TOPIC = "reactivemessaging.target-topic";
+    private static final String SOURCE_TOPIC = ConfluentStack.DEFAULT_SOURCE_TOPIC;
+    private static final String TARGET_TOPIC = ConfluentStack.DEFAULT_TARGET_TOPIC;
 
     ConfluentStackClient testClusterClient;
 

@@ -24,11 +24,15 @@ import java.util.stream.Stream;
 public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
 
     public static final String CONFLUENT_VERSION_ARG = "confluentVersion";
+    public static final String DEFAULT_SOURCE_TOPIC = "reactivemessaging.source-topic";
+    public static final String DEFAULT_TARGET_TOPIC = "reactivemessaging.target-topic";
     private DockerImageName kafkaImage;
     private DockerImageName registryImage;
     String kafkaNetworkAlias = "kafka";
     String incoming;
     String outgoing;
+    String sourceTopic;
+    String targetTopic;
     Network network;
     KafkaContainer kafka;
     ConfluentSchemaRegistryContainer schemaRegistry;
@@ -42,6 +46,8 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
                 String.format("confluentinc/cp-schema-registry:%s", confluentVersion));
         this.incoming = initArgs.get("incoming");
         this.outgoing = initArgs.get("outgoing");
+        this.sourceTopic = initArgs.getOrDefault("sourceTopic", DEFAULT_SOURCE_TOPIC);
+        this.targetTopic = initArgs.getOrDefault("targetTopic", DEFAULT_TARGET_TOPIC);
 
         this.network = Network.newNetwork();
         this.kafka = new KafkaContainer(kafkaImage)
@@ -76,8 +82,7 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
             if (incoming != null) {
                 properties.put(String.format("mp.messaging.incoming.%s.connector", incoming), "smallrye-kafka");
                 properties.put(String.format("mp.messaging.incoming.%s.allow.auto.create.topics", incoming), "false");
-                properties.put(String.format("mp.messaging.incoming.%s.topic", incoming),
-                        "reactivemessaging.source-topic");
+                properties.put(String.format("mp.messaging.incoming.%s.topic", incoming), sourceTopic);
                 properties.put(String.format("mp.messaging.incoming.%s.bootstrap.servers", incoming),
                         kafka.getBootstrapServers());
                 properties.put(String.format("mp.messaging.incoming.%s.schema.registry.url", incoming),
@@ -87,8 +92,7 @@ public class ConfluentStack implements QuarkusTestResourceLifecycleManager {
             if (outgoing != null) {
                 properties.put(String.format("mp.messaging.outgoing.%s.connector", outgoing), "smallrye-kafka");
                 properties.put(String.format("mp.messaging.outgoing.%s.allow.auto.create.topics", outgoing), "false");
-                properties.put(String.format("mp.messaging.outgoing.%s.topic", outgoing),
-                        "reactivemessaging.target-topic");
+                properties.put(String.format("mp.messaging.outgoing.%s.topic", outgoing), targetTopic);
                 properties.put(String.format("mp.messaging.outgoing.%s.bootstrap.servers", outgoing),
                         kafka.getBootstrapServers());
                 properties.put(String.format("mp.messaging.outgoing.%s.schema.registry.url", outgoing),
