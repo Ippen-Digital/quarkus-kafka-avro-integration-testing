@@ -29,6 +29,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         initArgs = {
                 @ResourceArg(name = "incoming", value = "mb-source"),
                 @ResourceArg(name = "outgoing", value = "mb-target"),
+                @ResourceArg(name = "sourceTopic", value = "mb.source-topic"),
+                @ResourceArg(name = "targetTopic", value = "mb.target-topic")
         },
         // we need this to avoid unpredictable tests configuration due to double starts of ConfluenceStack:
         // https://github.com/quarkusio/quarkus/issues/22025#:~:text=apply%20this%20argument%20to%20all%20tests
@@ -36,8 +38,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MultiBootstrapDonatorExtractorTest {
 
     public static final int MAX_CONSUMER_WAIT_TIME = 5000;
-    private static final String SOURCE_TOPIC = ConfluentStack.DEFAULT_SOURCE_TOPIC;
-    private static final String TARGET_TOPIC = ConfluentStack.DEFAULT_TARGET_TOPIC;
+    private static final String SOURCE_TOPIC = "mb.source-topic";
+    private static final String TARGET_TOPIC = "mb.target-topic";
 
     ConfluentStackClient testClusterClient;
 
