@@ -29,6 +29,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         initArgs = {
                 @ResourceArg(name = "incoming", value = "mb-source"),
                 @ResourceArg(name = "outgoing", value = "mb-target"),
+                // sourceTopic and targetTopic are optional, there will be a default topic overwritten if not given.
+                // IMPORTANT: if set, make sure the values are the same as the SOURCE_TOPIC & TARGET_TOPIC in the class body.
                 @ResourceArg(name = "sourceTopic", value = "mb.source-topic"),
                 @ResourceArg(name = "targetTopic", value = "mb.target-topic")
         },
