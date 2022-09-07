@@ -9,7 +9,6 @@ import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -28,11 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         value = ConfluentStack.class,
         initArgs = {
                 @ResourceArg(name = "incoming", value = "mb-source"),
-                @ResourceArg(name = "outgoing", value = "mb-target"),
-                // sourceTopic and targetTopic are optional, there will be a default topic overwritten if not given.
-                // IMPORTANT: if set, make sure the values are the same as the SOURCE_TOPIC & TARGET_TOPIC in the class body.
-                @ResourceArg(name = "sourceTopic", value = "mb.source-topic"),
-                @ResourceArg(name = "targetTopic", value = "mb.target-topic")
+                @ResourceArg(name = "outgoing", value = "mb-target")
         },
         // we need this to avoid unpredictable tests configuration due to double starts of ConfluenceStack:
         // https://github.com/quarkusio/quarkus/issues/22025#:~:text=apply%20this%20argument%20to%20all%20tests
@@ -40,25 +35,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MultiBootstrapDonatorExtractorTest {
 
     public static final int MAX_CONSUMER_WAIT_TIME = 5000;
-    private static final String SOURCE_TOPIC = "mb.source-topic";
-    private static final String TARGET_TOPIC = "mb.target-topic";
 
     ConfluentStackClient testClusterClient;
-
-    @BeforeEach
-    void setUp() {
-        testClusterClient.createTopics(SOURCE_TOPIC, TARGET_TOPIC);
-    }
 
     @Test
     void shouldExtractADonatorOutOfEveryDonation() throws InterruptedException, ExecutionException, TimeoutException {
         Donation donation = new Donation("Foo", "Bar", 10.0, 111);
         List<Donation> donationToSend = IntStream.range(0, 10).mapToObj(i -> donation).collect(Collectors.toList());
 
-        Future<List<Donator>> receiveFuture = testClusterClient.waitForRecords(TARGET_TOPIC, "testConsumerGroup",
+        Future<List<Donator>> receiveFuture = testClusterClient.waitForRecords("testConsumerGroup",
                 donationToSend.size(), StringDeserializer.class);
 
-        testClusterClient.sendRecords(SOURCE_TOPIC, donationToSend, StringSerializer.class,
+        testClusterClient.sendRecords(donationToSend, StringSerializer.class,
                 (index, event) -> String.valueOf(index));
 
         List<Donator> receivedDonators = receiveFuture.get(MAX_CONSUMER_WAIT_TIME, TimeUnit.MILLISECONDS);
@@ -70,10 +58,10 @@ class MultiBootstrapDonatorExtractorTest {
     void shouldExtractDonatorsName() throws InterruptedException, ExecutionException, TimeoutException {
         Donation donation = new Donation("Foo", "Bar", 10.0, 111);
 
-        Future<List<Donator>> receiveFuture = testClusterClient.waitForRecords(TARGET_TOPIC, "testConsumerGroup", 1,
+        Future<List<Donator>> receiveFuture = testClusterClient.waitForRecords("testConsumerGroup", 1,
                 StringDeserializer.class);
 
-        testClusterClient.sendRecords(SOURCE_TOPIC, Collections.singletonList(donation), StringSerializer.class,
+        testClusterClient.sendRecords(Collections.singletonList(donation), StringSerializer.class,
                 (index, event) -> String.valueOf(index));
 
         List<Donator> receivedDonators = receiveFuture.get(MAX_CONSUMER_WAIT_TIME, TimeUnit.MILLISECONDS);
