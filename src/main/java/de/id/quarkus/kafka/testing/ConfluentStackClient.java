@@ -152,7 +152,8 @@ public class ConfluentStackClient {
     }
 
     /**
-     * send records to the kafka topic using a producer build by {@link #createProducerWithAvroValue(Class)}
+     * send records to the source kafka topic defined in constructor using a producer build by
+     * {@link #createProducerWithAvroValue(Class)}
      *
      * @param <K>                 type of the key
      * @param <V>                 type of the value
@@ -165,6 +166,16 @@ public class ConfluentStackClient {
         sendRecordsToTopic(sourceTopic, values, keySerializerClass, keyCreationFunction);
     }
 
+    /***
+     * send records to a specific kafka topic using a producer build by {@link #createProducerWithAvroValue(Class)}
+     *
+     * @param topic               a kafka topic name
+     * @param <K>                 type of the key
+     * @param <V>                 type of the value
+     * @param values              list of values that will be sent
+     * @param keySerializerClass  serializer used for the record key
+     * @param keyCreationFunction function used for creating the record key
+     */
     public <K, V> void sendRecordsToTopic(String topic, List<V> values,
                                           Class<? extends Serializer<K>> keySerializerClass, BiFunction<Integer, V,
             K> keyCreationFunction) {
@@ -179,7 +190,7 @@ public class ConfluentStackClient {
     }
 
     /**
-     * waiting to receive records from the kafka topic using a consumber build by
+     * waiting to receive records from the target kafka topic defined in constructor using a consumer build by
      * {@link #createConsumerWithAvroValue(Class, String)}
      *
      * @param <K>             type of key
@@ -194,6 +205,18 @@ public class ConfluentStackClient {
         return waitForRecordsFromTopic(targetTopic, groupIdPrefix, expectedItems, keyDeserializer);
     }
 
+    /**
+     * waiting to receive records from a specific kafka topic using a consumer build by
+     * {@link #createConsumerWithAvroValue(Class, String)}
+     *
+     * @param topicName       a kafka topic name
+     * @param <K>             type of key
+     * @param <V>             type of value
+     * @param groupIdPrefix   prefix used for the groupId (a unifier will be added)received
+     * @param expectedItems   minimum amount of items waiting to be received
+     * @param keyDeserializer key used for the key record
+     * @return received records, not null
+     */
     public <K, V> Future<List<V>> waitForRecordsFromTopic(String topicName, String groupIdPrefix, int expectedItems,
                                                           Class<? extends Deserializer<K>> keyDeserializer) {
         // it´s important to subscribe synchronous to avoid race conditions when afterwards a producer writes to this
