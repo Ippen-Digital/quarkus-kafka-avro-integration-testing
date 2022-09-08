@@ -7,6 +7,7 @@ import de.id.quarkus.kafka.testing.ConfluentStack;
 import de.id.quarkus.kafka.testing.ConfluentStackClient;
 import de.id.quarkus.kafka.testing.scenarios.DonatorEnrichmentProfile;
 import io.quarkus.test.common.QuarkusTestResource;
+import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -30,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
 @TestProfile(DonatorEnrichmentProfile.class)
-@QuarkusTestResource(ConfluentStack.class)
+@QuarkusTestResource(value = ConfluentStack.class, restrictToAnnotatedClass = true)
 class KStreamsDonatorEnrichmentTest {
 
     public static final int MAX_CONSUMER_WAIT_TIME = 5000;
@@ -50,12 +51,12 @@ class KStreamsDonatorEnrichmentTest {
     @Test
     void shouldExtractADonatorContainingNameOfDonationProject() throws InterruptedException, ExecutionException, TimeoutException {
         List<DonationCollector> donationCollectors = donationCollectors();
-        testClusterClient.sendRecords(DONATION_COLLECTOR_TOPIC, donationCollectors, IntegerSerializer.class, (integer, donationCollector) -> donationCollector.getId());
+        testClusterClient.sendRecordsToTopic(DONATION_COLLECTOR_TOPIC, donationCollectors, IntegerSerializer.class, (integer, donationCollector) -> donationCollector.getId());
 
-        Future<List<Donator>> receive = testClusterClient.waitForRecords(DONATOR_TOPIC, "donators", 1, IntegerDeserializer.class);
+        Future<List<Donator>> receive = testClusterClient.waitForRecordsFromTopic(DONATOR_TOPIC, "donators", 1, IntegerDeserializer.class);
 
         Donation donation = new Donation("Max", "Mustermann", 10.0, 222);
-        testClusterClient.sendRecords(DONATION_TOPIC, Collections.singletonList(donation), IntegerSerializer.class, (index, don) -> index);
+        testClusterClient.sendRecordsToTopic(DONATION_TOPIC, Collections.singletonList(donation), IntegerSerializer.class, (index, don) -> index);
 
         List<Donator> donators = receive.get(MAX_CONSUMER_WAIT_TIME, TimeUnit.MILLISECONDS);
 
@@ -66,12 +67,12 @@ class KStreamsDonatorEnrichmentTest {
     @Test
     void shouldAddTheMoneyOnTheDonationCollector() throws InterruptedException, ExecutionException, TimeoutException {
         List<DonationCollector> donationCollectors = donationCollectors();
-        testClusterClient.sendRecords(DONATION_COLLECTOR_TOPIC, donationCollectors, IntegerSerializer.class, (integer, donationCollector) -> donationCollector.getId());
+        testClusterClient.sendRecordsToTopic(DONATION_COLLECTOR_TOPIC, donationCollectors, IntegerSerializer.class, (integer, donationCollector) -> donationCollector.getId());
 
-        Future<List<DonationCollector>> receiveCollectors = testClusterClient.waitForRecords(DONATION_COLLECTOR_TOPIC, "donator-collections", 1, IntegerDeserializer.class);
+        Future<List<DonationCollector>> receiveCollectors = testClusterClient.waitForRecordsFromTopic(DONATION_COLLECTOR_TOPIC, "donator-collections", 1, IntegerDeserializer.class);
 
         Donation donation = new Donation("Max", "Mustermann", 10.0, 222);
-        testClusterClient.sendRecords(DONATION_TOPIC, Collections.singletonList(donation), IntegerSerializer.class, (index, don) -> index);
+        testClusterClient.sendRecordsToTopic(DONATION_TOPIC, Collections.singletonList(donation), IntegerSerializer.class, (index, don) -> index);
 
         List<DonationCollector> updatedDonationCollectors = receiveCollectors.get(MAX_CONSUMER_WAIT_TIME, TimeUnit.MILLISECONDS);
 

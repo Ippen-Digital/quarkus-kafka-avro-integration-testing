@@ -6,6 +6,7 @@ import de.id.quarkus.kafka.testing.ConfluentStack;
 import de.id.quarkus.kafka.testing.ConfluentStackClient;
 import de.id.quarkus.kafka.testing.scenarios.DonatorExtractorProfile;
 import io.quarkus.test.common.QuarkusTestResource;
+import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -25,29 +26,26 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
-@QuarkusTestResource(value = ConfluentStack.class)
+@QuarkusTestResource(value = ConfluentStack.class, restrictToAnnotatedClass = true,
+        initArgs = {
+                @ResourceArg(name = "sourceTopic", value = "kafkastreams.source-topic"),
+                @ResourceArg(name = "targetTopic", value = "kafkastreams.target-topic")
+        })
 @TestProfile(DonatorExtractorProfile.class)
 class KStreamsDonatorExtractorTest {
 
     public static final int MAX_CONSUMER_WAIT_TIME = 5000;
-    private static final String SOURCE_TOPIC = "kafkastreams.source-topic";
-    private static final String TARGET_TOPIC = "kafkastreams.target-topic";
-
     ConfluentStackClient testClusterClient;
-
-    @BeforeEach
-    void setUp() {
-        testClusterClient.createTopics(SOURCE_TOPIC, TARGET_TOPIC);
-    }
 
     @Test
     void shouldExtractADonatorOutOfEveryDonation() throws InterruptedException, ExecutionException, TimeoutException {
         Donation donation = new Donation("Max", "Mustermann", 10.0, 111);
         List<Donation> donationsToSend = IntStream.range(0, 10).mapToObj(i -> donation).collect(Collectors.toList());
 
-        Future<List<Donator>> receiveFuture = testClusterClient.waitForRecords(TARGET_TOPIC, "testConsumerGroup", donationsToSend.size(), StringDeserializer.class);
+        Future<List<Donator>> receiveFuture = testClusterClient.waitForRecords("testConsumerGroup",
+                donationsToSend.size(), StringDeserializer.class);
 
-        testClusterClient.sendRecords(SOURCE_TOPIC, donationsToSend, StringSerializer.class, (index, event) -> String.valueOf(index));
+        testClusterClient.sendRecords(donationsToSend, StringSerializer.class, (index, event) -> String.valueOf(index));
 
         List<Donator> receivedDonators = receiveFuture.get(MAX_CONSUMER_WAIT_TIME, TimeUnit.MILLISECONDS);
 
@@ -58,9 +56,11 @@ class KStreamsDonatorExtractorTest {
     void shouldExtractDonatorsName() throws InterruptedException, ExecutionException, TimeoutException {
         Donation donation = new Donation("Max", "Mustermann", 10.0, 111);
 
-        Future<List<Donator>> receiveFuture = testClusterClient.waitForRecords(TARGET_TOPIC, "testConsumerGroup", 1, StringDeserializer.class);
+        Future<List<Donator>> receiveFuture = testClusterClient.waitForRecords("testConsumerGroup", 1,
+                StringDeserializer.class);
 
-        testClusterClient.sendRecords(SOURCE_TOPIC, Collections.singletonList(donation), StringSerializer.class, (index, event) -> String.valueOf(index));
+        testClusterClient.sendRecords(Collections.singletonList(donation), StringSerializer.class,
+                (index, event) -> String.valueOf(index));
 
         List<Donator> receivedDonators = receiveFuture.get(MAX_CONSUMER_WAIT_TIME, TimeUnit.MILLISECONDS);
 

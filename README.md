@@ -75,7 +75,7 @@ class ReactiveDonatorExtractorTest {
 
 ## How to use?
 
-### Define the kafka stack as testing resource
+### Basic: define the kafka stack as testing resource
 
 ```java
 @QuarkusTest
@@ -83,10 +83,45 @@ class ReactiveDonatorExtractorTest {
 class YourIntegrationTest {}
 ```
 
-Version of the Confluent stack can be customized
+### Advanced: define the kafka stack with extra ResourceArgs
+
+#### Multiple Boostrap Servers
+In case the `incoming` and `outgoing` channels, source topic and target topic are different because they are from different Bootstrap Servers, we need to define extra ResourceArgs in the `@QuarkusTestResource`. Also need to make sure the `ConfluentStackClient` create the same topics accordingly. 
+```java
+@QuarkusTest
+@QuarkusTestResource(
+        value = ConfluentStack.class,
+        initArgs = {
+                @ResourceArg(name = "incoming", value = "mb-source"),
+                @ResourceArg(name = "outgoing", value = "mb-target"),
+                @ResourceArg(name = "sourceTopic", value = "mb.source-topic"),
+                @ResourceArg(name = "targetTopic", value = "mb.target-topic")
+        }
+)
+class YourIntegrationTest {
+  private static final String SOURCE_TOPIC = "mb.source-topic";
+  private static final String TARGET_TOPIC = "mb.target-topic";
+
+  ConfluentStackClient testClusterClient;
+
+  @BeforeEach
+  void setUp() {
+    testClusterClient.createTopics(SOURCE_TOPIC, TARGET_TOPIC);
+  }
+}
+```
+
+
+#### ConfluentStack Versions
+Version of the Confluent stack can be customized. Default version is `7.2.1`
 
 ```java
-@QuarkusTestResource(value = ConfluentStack.class, initArgs = {@ResourceArg(name = ConfluentStack.CONFLUENT_VERSION_ARG, value = "5.3.1")})
+@QuarkusTestResource(
+        value = ConfluentStack.class, 
+        initArgs = {
+                @ResourceArg(name = ConfluentStack.CONFLUENT_VERSION_ARG, value = "7.2.1.arm64")
+        }
+)
 ```
 
 ### Inject the client
