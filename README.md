@@ -1,4 +1,5 @@
 # quarkus-kafka-avro-integration-testing
+## This is no longer maintained and the quarkus-test-kafka-companion is a very good replacement
 
 **A testing library for Quarkus projects implementing Kafka with Avro.**
 
